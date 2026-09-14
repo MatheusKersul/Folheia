@@ -15,18 +15,18 @@ consulta no banco de dados integrado na aws para que o cliente (frontend) consig
 
 Folheia/
 
-├── backend/                # Aplicação do backend via FastAPI e configuração do banco de dados PostgreSQL  
-│   ├── main.py             # Inicialização do servidor (FastAPI)
-│   ├── database.py         # Configuração de conexão com o PostgreSQL (AWS RDS)  
-│   ├── models.py           # Modelos do banco de dados (SQLAlchemy)  
-│   ├── schemas.py          # Validação dos dados (Pydantic)  
-│   ├── init_db.py          # Script isolado para criar as tabelas no banco  
-│   └── requirements.txt    # Dependências do Python (FastAPI, Uvicorn, etc.)  
+├── backend/                 Aplicação do backend via FastAPI e configuração do banco de dados PostgreSQL  
+│   ├── main.py              Inicialização do servidor (FastAPI)
+│   ├── database.py          Configuração de conexão com o PostgreSQL (AWS RDS)  
+│   ├── models.py            Modelos do banco de dados (SQLAlchemy)  
+│   ├── schemas.py           Validação dos dados (Pydantic)  
+│   ├── init_db.py           Script isolado para criar as tabelas no banco  
+│   └── requirements.txt     Dependências do Python (FastAPI, Uvicorn, etc.)  
 │  
-├── frontend/               # Desenvolvimento da interface de usuário para realizar requisições do servidor
-│   ├── index.html          # Estrutura visual  
-│   ├── style.css           # Design  
-│   └── script.js           # Lógica de comunicação com o backend  
+├── frontend/                Desenvolvimento da interface de usuário para realizar requisições do servidor
+│   ├── index.html           Estrutura visual  
+│   ├── style.css            Design  
+│   └── script.js            Lógica de comunicação com o backend  
 │  
 ├── .env                      
 ├── .gitignore              
