@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 import asyncio
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +23,16 @@ class OfertaLivro(BaseModel):
     loja: str
     preco: float
     link: str
+
+class RespostaLivros(BaseModel):
+    isbn: str
+    titulo: str
+    data_publicacao: str
+    formato: str
+    num_paginas: int
+    editora: str
+    autor: str
+
 
 class RespostaBusca(BaseModel):
     isbn: str
@@ -58,6 +68,32 @@ def test_db_connection(db = Depends(get_db)):
         return {"status": "sucesso", "mensagem": "Conectado ao RDS com sucesso!"}
     except Exception as e:
         return {"status": "erro", "mensagem": f"Falha na conexão: {str(e)}"}
+
+@app.get("/buscar-livros", response_model=RespostaLivros)
+async def buscarlivros(isbn: str, titulo: str = "Não informado", db = Depends(get_db)):
+    await asyncio.sleep(2)
+
+    try:
+        query = text("""
+            SELECT * FROM public.editions WHERE
+                    isbn_13 = :isbn OR titulo ILIKE :titulo
+            """)
+
+        resultado = db.execute(query, {"isbn": isbn, "titulo": f"%{titulo}%"}).mappings().fetchone()
+
+        if not resultado:
+            raise HTTPException(status_code=404, detail="Nenhuma obra possui esse titulo ou isbn")
+        else:
+            return RespostaLivros(
+                isbn=resultado["isbn_13"], titulo = resultado["titulo"],
+                data_publicacao = resultado["data_publicacao"], formato = resultado["formato"],
+                num_paginas = resultado["num_paginas"], editora = resultado["editora"],
+                autor = resultado["autor"]
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
 @app.get("/buscar-precos/{termo_busca}", response_model=RespostaBusca)
