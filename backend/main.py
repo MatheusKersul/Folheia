@@ -27,11 +27,11 @@ class OfertaLivro(BaseModel):
 class RespostaLivros(BaseModel):
     isbn: str
     titulo: str
-    data_publicacao: str
-    formato: str
-    num_paginas: int
-    editora: str
-    autor: str
+    data_publicacao: str | None
+    formato: str | None
+    num_paginas: int | None
+    editora: str | None
+    autor: str | None
 
 
 class RespostaBusca(BaseModel):
@@ -48,7 +48,7 @@ DB_NAME = os.getenv("DB_NAME")
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind = engine)
 
 def get_db():
@@ -70,25 +70,43 @@ def test_db_connection(db = Depends(get_db)):
         return {"status": "erro", "mensagem": f"Falha na conexão: {str(e)}"}
 
 @app.get("/buscar-livros", response_model=RespostaLivros)
-async def buscarlivros(isbn: str, titulo: str = "Não informado", db = Depends(get_db)):
+async def buscarlivros(isbn: str | None = None, titulo: str = "Não informado", db = Depends(get_db)):
     await asyncio.sleep(2)
 
     try:
         query = text("""
-            SELECT * FROM public.editions WHERE
-                    isbn_13 = :isbn OR titulo ILIKE :titulo
+            SELECT *
+            FROM public.editions
+            WHERE isbn_13 = :isbn
+            LIMIT 1
+        """)
+
+        resultado = db.execute(
+            query,
+            {"isbn": isbn}
+        ).mappings().fetchone()
+
+        if not resultado:
+            query = text("""
+                SELECT *
+                FROM public.editions
+                WHERE titulo ILIKE :titulo
+                LIMIT 1
             """)
 
-        resultado = db.execute(query, {"isbn": isbn, "titulo": f"%{titulo}%"}).mappings().fetchone()
+            resultado = db.execute(
+                query,
+                {"titulo": f"%{titulo}%"}
+            ).mappings().fetchone()
 
         if not resultado:
             raise HTTPException(status_code=404, detail="Nenhuma obra possui esse titulo ou isbn")
         else:
             return RespostaLivros(
-                isbn=resultado["isbn_13"], titulo = resultado["titulo"],
-                data_publicacao = resultado["data_publicacao"], formato = resultado["formato"],
-                num_paginas = resultado["num_paginas"], editora = resultado["editora"],
-                autor = resultado["autor"]
+                isbn=resultado["isbn_13"], titulo=resultado["titulo"],
+                data_publicacao=resultado["data_publicacao"], formato=resultado["formato"],
+                num_paginas=resultado["num_paginas"], editora=resultado["editora"],
+                autor=resultado["autor"]
             )
     except HTTPException:
         raise
