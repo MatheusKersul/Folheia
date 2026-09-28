@@ -116,7 +116,7 @@ async def buscarlivros(isbn: str | None = None, titulo: str = "Não informado", 
 
 @app.get("/buscar-precos/{termo_busca}", response_model=RespostaBusca)
 async def buscarprecos(termo_busca: str, isbn: str = "Não informado"):
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)
     #simulação da requisão do frontend e resposta do postgre
     ofertas_encontradas = [
         OfertaLivro(loja="Mercado livre", preco=45.90, link="linkmercadolivre"),
