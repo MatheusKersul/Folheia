@@ -70,37 +70,45 @@ def test_db_connection(db = Depends(get_db)):
         return {"status": "erro", "mensagem": f"Falha na conexão: {str(e)}"}
 
 @app.get("/buscar-livros", response_model=RespostaLivros)
-async def buscarlivros(isbn: str | None = None, titulo: str = "Não informado", db = Depends(get_db)):
-    await asyncio.sleep(0)
-
-    try:
-        query = text("""
-            SELECT *
-            FROM public.editions
-            WHERE isbn_13 = :isbn
-            LIMIT 1
-        """)
-
-        resultado = db.execute(
-            query,
-            {"isbn": isbn}
-        ).mappings().fetchone()
-
-        if not resultado:
+async def buscarlivros(tipo: str | None = None, termo: str = "Não inserido", db = Depends(get_db)):
+    
+    if not termo:
+        if tipo == 'titulo':
             query = text("""
                 SELECT *
                 FROM public.editions
-                WHERE titulo ILIKE :titulo
+                WHERE titulo ILIKE ?
                 LIMIT 1
             """)
+            param = f"%{termo}%"
 
-            resultado = db.execute(
-                query,
-                {"titulo": f"%{titulo}%"}
-            ).mappings().fetchone()
+        elif tipo == 'autor':
+            query = text("""
+                SELECT *
+                FROM public.editions
+                WHERE autor ILIKE ?
+                LIMIT 1
+            """)
+            param = f"%{termo}%"
 
+        elif tipo == 'isbn':
+            query = text("""
+                SELECT *
+                FROM public.editions
+                WHERE isbn = replace(?, '-', '')
+                LIMIT 1
+            """)
+            param = f"%{termo}%"
+    else:
+        raise HTTPException(status_code=400, detail="Tipo de busca inválido: campo de busca vazio")
+
+    
+    try:
+
+        resultado = db.execute(query, {"termo": param}).mappings().fetchone()
+        
         if not resultado:
-            raise HTTPException(status_code=404, detail="Nenhuma obra possui esse titulo ou isbn")
+            raise HTTPException(status_code=404, detail=f"Nenhuma obra possui esse {termo}")
         else:
             return RespostaLivros(
                 isbn=resultado["isbn_13"], titulo=resultado["titulo"],
