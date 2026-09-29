@@ -15,13 +15,26 @@ import HeaderDecoration from './HeaderDecoration';
 
 function App() {
   const [dadosLivro, setDadosLivro] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [termoBusca, setTermoBusca] = useState('');
+  const [erroInput, setErroInput] = useState(false); // Estado para controlar o erro de input vazio
+  const [tipoBusca, setTipoBusca] = useState('titulo'); 
 
-  useEffect(() => {
-    fetch('http://localhost:8000/buscar-livros?isbn=9788595084742&titulo=O%20Hobbit')
+  const realizarBusca = (e) => {
+    e.preventDefault();
+
+    if (!termoBusca.trim()) {
+      setErroInput(true);
+      return;
+    }
+    
+    setErroInput(false);
+    setLoading(true);
+
+    // Agora enviamos 'tipo' e 'termo' como parâmetros para o FastAPI
+    fetch(`http://localhost:8000/buscar-livros?tipo=${tipoBusca}&termo=${encodeURIComponent(termoBusca)}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setDadosLivro(data);
         setLoading(false);
       })
@@ -29,7 +42,7 @@ function App() {
         console.error("Erro ao buscar dados:", err);
         setLoading(false);
       });
-  }, []);
+  };
 
   return (
   <div className="app">
@@ -39,8 +52,43 @@ function App() {
     </header>
 
     <main className="container">
+      {/* Formulário de Pesquisa */}
+     <form 
+        className={`search-form ${loading ? 'fade-out' : ''}`} 
+        onSubmit={realizarBusca}
+      >
+        {/* Nova caixa de seleção com a "setinha" */}
+        <select 
+          className="search-select"
+          value={tipoBusca}
+          onChange={(e) => setTipoBusca(e.target.value)}
+        >
+          <option value="titulo">Título</option>
+          <option value="autor">Autor</option>
+          <option value="isbn">ISBN</option>
+        </select>
+
+        <input 
+          type="text" 
+          className={`search-input ${erroInput ? 'input-error' : ''}`}
+          placeholder={`Buscar por ${tipoBusca}...`} // O placeholder muda dinamicamente
+          value={termoBusca}
+          onChange={(e) => {
+            setTermoBusca(e.target.value);
+            setErroInput(false);
+          }}
+        />
+        <button type="submit" className="search-button">
+          Buscar
+        </button>
+      </form>
+
+      {erroInput && (
+        <p className="error-message">Por favor, digite algum termo para pesquisar.</p>
+      )}
+
       {loading ? (
-        <p>Buscando dados do livro...</p>
+        <p className="loading-message">Buscando dados do livro...</p>
       ) : dadosLivro ? (
         <div className="book-card">
           <h2>{dadosLivro.titulo}</h2>

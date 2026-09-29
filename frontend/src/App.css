@@ -421,3 +421,109 @@ body {
   z-index: 1;
   pointer-events: none;
 }
+
+.search-form {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  max-width: 480px; /* Barra menor e centralizada */
+  margin: 0 auto 40px auto;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Efeito de fade-out ativado durante o loading */
+.search-form.fade-out {
+  opacity: 0.4;
+  pointer-events: none;
+  transform: translateY(-5px);
+}
+
+.search-input {
+  flex: 1;
+  padding: 14px 24px;
+  border: 1px solid #e3e6eb;
+  border-radius: 50px; /* Extremidades totalmente arredondadas */
+  font-size: 15px;
+  color: #14213d;
+  background: #ffffff;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(20, 33, 61, 0.04);
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #fca311;
+  box-shadow: 0 4px 15px rgba(252, 163, 17, 0.2);
+}
+
+.search-input.input-error {
+  border-color: #d93025;
+  box-shadow: 0 4px 15px rgba(217, 48, 37, 0.15);
+}
+
+.search-button {
+  padding: 0 28px;
+  border: none;
+  border-radius: 50px; /* Extremidades totalmente arredondadas */
+  background: #14213d;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.search-button:hover {
+  background: #fca311;
+  color: #14213d;
+}
+
+.search-button:active {
+  transform: scale(0.96);
+}
+
+.error-message {
+  text-align: center;
+  color: #d93025;
+  font-size: 14px;
+  margin-top: -25px;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.loading-message {
+  text-align: center;
+  color: #526079;
+  font-size: 16px;
+  background: #ffffff;
+  border: 1px solid #e3e6eb;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-select {
+  padding: 14px 20px;
+  border: 1px solid #e3e6eb;
+  border-radius: 50px;
+  font-size: 15px;
+  color: #14213d;
+  background-color: #ffffff;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(20, 33, 61, 0.04);
+  transition: all 0.3s ease;
+  /* Garante que a setinha nativa do navegador apareça bonitinha */
+  appearance: auto; 
+}
+
+.search-select:focus {
+  border-color: #fca311;
+  box-shadow: 0 4px 15px rgba(252, 163, 17, 0.2);
+}
+
+/* Ajuste o tamanho máximo do formulário para caber o novo botão */
+.search-form {
+  max-width: 650px; 
+}
