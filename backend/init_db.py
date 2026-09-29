@@ -62,12 +62,114 @@ livros_com_autores = db.sql("""
 """)
 print("duckdb criado com sucesso")
 
+#comando para retirar itens duplicados do bd
+# Comando para retirar itens duplicados lendo da relação em memória
+livros_com_autores = db.sql("""
+WITH base AS (
+    SELECT
+        regexp_replace(isbn_13, '[^0-9]', '', 'g') AS isbn_13,
+
+        NULLIF(TRIM(titulo), '') AS titulo,
+        NULLIF(TRIM(autor), '') AS autor_nome, -- Ajustado para a coluna 'autor' vinda do JOIN
+        NULLIF(TRIM(editora), '') AS editora,
+        NULLIF(TRIM(data_publicacao), '') AS data_publicacao,
+        NULLIF(TRIM(formato), '') AS formato,
+        num_paginas
+
+    FROM livros_com_autores
+
+    WHERE isbn_13 IS NOT NULL
+      AND TRIM(isbn_13) <> ''
+),
+
+consolidado AS (
+    SELECT
+        isbn_13,
+
+        ANY_VALUE(titulo) FILTER (
+            WHERE titulo IS NOT NULL
+        ) AS titulo,
+
+        ANY_VALUE(autor_nome) FILTER (
+            WHERE autor_nome IS NOT NULL
+        ) AS autor_nome,
+
+        ANY_VALUE(editora) FILTER (
+            WHERE editora IS NOT NULL
+        ) AS editora,
+
+        ANY_VALUE(data_publicacao) FILTER (
+            WHERE data_publicacao IS NOT NULL
+        ) AS data_publicacao,
+
+        ANY_VALUE(formato) FILTER (
+            WHERE formato IS NOT NULL
+        ) AS formato,
+
+        ANY_VALUE(num_paginas) FILTER (
+            WHERE num_paginas IS NOT NULL
+        ) AS num_paginas,
+
+        COUNT(*) AS copias_encontradas
+
+    FROM base
+
+    GROUP BY isbn_13
+)
+
+SELECT *
+FROM consolidado
+ORDER BY isbn_13
+""")
+
+#criação da tabela de usuarios
+db.sql("CREATE SEQUENCE seq_users_id")
+db.sql("""
+
+    CREATE TYPE permissoes_enum AS ENUM ('usuario', 'funcionario', 'admin');
+    CREATE TABLE users (
+        id INT DEFAULT nextval('seq_users_id') PRIMARY KEY,
+        Nome VARCHAR(255),
+        Email VARCHAR(255),
+        Senha VARCHAR(255),
+        Permissoes permissoes_enum DEFAULT 'usuario'
+    )
+""")
+
+#criação da tabela de biblioteca
+
+db.sql("""
+    CREATE TABLE library (
+        id INT DEFAULT nextval('seq_users_id') PRIMARY KEY,
+        id_usuario INTEGER,
+        id_bilioteca INTEGER,
+        nome VARCHAR(255)
+    )
+""")
+
+#criação da tabela link_biblioteca
+db.sql("""
+    CREATE TABLE link_library (
+        id INT DEFAULT nextval('seq_users_id') PRIMARY KEY,
+        id_bilioteca INTEGER,
+        id_livro INTEGER
+    )
+""")
+
+
 db.sql(f"""
     INSTALL postgres;
     LOAD postgres;
     ATTACH 'dbname={DB_NAME} user={DB_USER} host={DB_HOST} password={DB_PASSWORD} port={DB_PORT}' AS aws_pg (TYPE POSTGRES);
 
-    CALL postgres_execute('aws_pg', 'DROP TABLE IF EXISTS editions;');
+    CALL postgres_execute('aws_pg', '
+        DROP TABLE IF EXISTS link_library;
+        DROP TABLE IF EXISTS library;
+        DROP TABLE IF EXISTS users;
+        DROP TABLE IF EXISTS editions;
+        DROP TYPE IF EXISTS permissoes_enum;
+    ');
+
     CALL postgres_execute('aws_pg', '
         CREATE TABLE IF NOT EXISTS editions (
             id SERIAL PRIMARY KEY,
@@ -78,10 +180,34 @@ db.sql(f"""
             num_paginas INTEGER,
             editora TEXT,
             autor TEXT
-            );
+        );
+
+        CREATE TYPE permissoes_enum AS ENUM (''usuario'', ''funcionario'', ''admin'');
+
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            Nome VARCHAR(255),
+            Email VARCHAR(255),
+            Senha VARCHAR(255),
+            Permissoes permissoes_enum DEFAULT ''usuario''
+        );
+
+        CREATE TABLE IF NOT EXISTS library (
+            id SERIAL PRIMARY KEY,
+            id_usuario INTEGER,
+            id_bilioteca INTEGER,
+            nome VARCHAR(255)
+        );
+
+        CREATE TABLE IF NOT EXISTS link_library (
+            id SERIAL PRIMARY KEY,
+            id_bilioteca INTEGER,
+            id_livro INTEGER
+        );
     ');
-        INSERT INTO aws_pg.editions (isbn_13, titulo, data_publicacao, formato, num_paginas, editora, autor) 
-        SELECT isbn_13, titulo, data_publicacao, formato, num_paginas, editora, autor 
-        FROM livros_com_autores;
+
+    INSERT INTO aws_pg.editions (isbn_13, titulo, data_publicacao, formato, num_paginas, editora, autor) 
+    SELECT isbn_13, titulo, data_publicacao, formato, num_paginas, editora, autor_nome
+    FROM livros_com_autores;
 """)
 print("bd criado com sucesso")
