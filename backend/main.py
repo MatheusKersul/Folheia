@@ -71,7 +71,7 @@ def test_db_connection(db = Depends(get_db)):
 
 @app.get("/buscar-livros", response_model=RespostaLivros)
 async def buscarlivros(isbn: str | None = None, titulo: str = "Não informado", db = Depends(get_db)):
-    await asyncio.sleep(0)
+    await asyncio.sleep(2)
 
     try:
         query = text("""
