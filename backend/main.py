@@ -76,56 +76,84 @@ def test_db_connection(db = Depends(get_db)):
         return {"status": "erro", "mensagem": f"Falha na conexão: {str(e)}"}
 
 @app.get("/buscar-livros", response_model=RespostaLivros)
-async def buscarlivros(tipo: str | None = None, termo: str = "Não inserido", db = Depends(get_db)):
-    
+async def buscarlivros(
+    tipo: str | None = None,
+    termo: str = "",
+    db=Depends(get_db)
+):
+
     if not termo:
-        if tipo == 'titulo':
-            query = text("""
-                SELECT *
-                FROM public.editions
-                WHERE titulo ILIKE ?
-                LIMIT 1
-            """)
-            param = f"%{termo}%"
+        raise HTTPException(
+            status_code=400,
+            detail="Campo de busca vazio"
+        )
 
-        elif tipo == 'autor':
-            query = text("""
-                SELECT *
-                FROM public.editions
-                WHERE autor ILIKE ?
-                LIMIT 1
-            """)
-            param = f"%{termo}%"
+    if tipo == "titulo":
+        query = text("""
+            SELECT *
+            FROM public.editions
+            WHERE titulo ILIKE :termo
+            LIMIT 1
+        """)
+        param = f"%{termo}%"
 
-        elif tipo == 'isbn':
-            query = text("""
-                SELECT *
-                FROM public.editions
-                WHERE isbn = replace(?, '-', '')
-                LIMIT 1
-            """)
-            param = f"%{termo}%"
+    elif tipo == "autor":
+        query = text("""
+            SELECT *
+            FROM public.editions
+            WHERE autor ILIKE :termo
+            LIMIT 1
+        """)
+        param = f"%{termo}%"
+
+    elif tipo == "isbn":
+        query = text("""
+            SELECT *
+            FROM public.editions
+            WHERE isbn_13 = replace(:termo, '-', '')
+            LIMIT 1
+        """)
+        param = termo
+
     else:
-        raise HTTPException(status_code=400, detail="Tipo de busca inválido: campo de busca vazio")
+        raise HTTPException(
+            status_code=400,
+            detail="Tipo de busca inválido"
+        )
 
-    
     try:
-
-        resultado = db.execute(query, {"termo": param}).mappings().fetchone()
-        
-        if not resultado:
-            raise HTTPException(status_code=404, detail=f"Nenhuma obra possui esse {termo}")
-        else:
-            return RespostaLivros(
-                isbn=resultado["isbn_13"], titulo=resultado["titulo"],
-                data_publicacao=resultado["data_publicacao"], formato=resultado["formato"],
-                num_paginas=resultado["num_paginas"], editora=resultado["editora"],
-                autor=resultado["autor"]
+        resultado = (
+            db.execute(
+                query,
+                {"termo": param}
             )
+            .mappings()
+            .fetchone()
+        )
+
+        if not resultado:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Nenhuma obra encontrada para '{termo}'"
+            )
+
+        return RespostaLivros(
+            isbn=resultado["isbn_13"],
+            titulo=resultado["titulo"],
+            data_publicacao=resultado["data_publicacao"],
+            formato=resultado["formato"],
+            num_paginas=resultado["num_paginas"],
+            editora=resultado["editora"],
+            autor=resultado["autor"]
+        )
     except HTTPException:
         raise
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro interno: {str(e)}"
+        )
 
 
 @app.get("/buscar-precos/{termo_busca}", response_model=RespostaBusca)
