@@ -1,0 +1,14 @@
+# Dumps e arquivos grandes
+acervo_dump/
+acervo_parquets/
+
+# Ambientes virtuais e caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git
+.git/
+.gitignore
