@@ -1,6 +1,5 @@
 .env
 __pycache__
 .users.txt
-\acervo_dump
-\acervo_parquets
 \.venv
+\acervo_data

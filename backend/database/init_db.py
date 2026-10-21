@@ -15,7 +15,6 @@ DB_NAME = os.getenv("DB_NAME")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
-
 def validate_environment():
     required = {
         "FILE_AUTHORS": FILE_AUTHORS,
@@ -341,7 +340,6 @@ def main():
     print("========================================")
     print("ETL concluído com sucesso!")
     print("========================================")
-
 
 if __name__ == "__main__":
     main()

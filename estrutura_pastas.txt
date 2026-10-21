@@ -1,0 +1,56 @@
+===============================================================================
+                       FOLHEIA — GUIA BÁSICO DE PASTAS
+===============================================================================
+
+-------------------------------------------------------------------------------
+SUBPASTAS DENTRO DE "backend/"
+-------------------------------------------------------------------------------
+
+• backend/core/
+  A infraestrutura do backend:
+  - Leitura das variáveis do arquivo .env (senhas, portas, URLs);
+  - Conexão com o banco de dados (engine, SessionLocal, get_db);
+  - Funções de segurança (hashing de senha com bcrypt e tokens JWT);
+  - Conexão centralizada com o Redis.
+
+• backend/models/
+  Modelos do banco de dados (SQLAlchemy ORM):
+  - Transforma as tabelas do PostgreSQL em classes Python;
+  - Ex: tabela 'users' vira class User, tabela 'editions' vira class Edition.
+
+• backend/schemas/
+  Validação de dados da API (Pydantic):
+  - Define o formato exato dos dados que chegam do frontend (ex: nome, email, senha);
+  - Define o formato exato das respostas devolvidas para quem chamou a API.
+
+• backend/crud/
+  Operações diretas no banco de dados (Create, Read, Update, Delete):
+  - Funções para criar usuário, buscar por e-mail, buscar livro por ISBN/título/autor;
+  - Toda consulta ao banco via ORM fica guardada aqui.
+
+• backend/services/
+  Regras de negócio e lógica da aplicação:
+  - Serviço de autenticação (validações, regras de login e cadastro);
+  - Serviço de livros (lógica de consulta inteligente com cache no Redis).
+
+• backend/routers/
+  As rotas HTTP (Endpoints da API FastAPI):
+  - auth.py   -> rotas de cadastro e login (/auth/register, /auth/login);
+  - books.py  -> rotas de busca de livros e preços (/buscar-livros, /buscar-precos);
+  - system.py -> rota de teste de conexão e mensagens de sistema (/testar-conexao).
+
+• backend/database/
+  Scripts de manutenção e carga do banco de dados:
+  - Contém o script ETL (init_db.py) que lê arquivos brutos com DuckDB e
+    popula o PostgreSQL na nuvem (RDS).
+
+• backend/scrappers/
+  Coletores externos de dados (Web Scraping):
+  - Scripts para buscar preços de livros na Amazon e outros sites (via BrightData API).
+
+• backend/tests/
+  Testes automatizados:
+  - Scripts que testam todas as rotas da API em memória para garantir que nada
+    quebre após alterações no código.
+
+===============================================================================
