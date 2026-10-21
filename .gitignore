@@ -3,3 +3,9 @@ __pycache__
 .users.txt
 \.venv
 \acervo_data
+
+# Infra local do experimento de replicação (nunca versionar)
+infra/state.json
+infra/generated.env
+infra/certs/
+infra/.venv/
