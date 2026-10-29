@@ -10,6 +10,15 @@ from schemas.user import (
     RespostaLogin,
 )
 from schemas.book import OfertaLivro, RespostaLivros, RespostaBusca
+from schemas.library import (
+    AdicionarLivroRequest,
+    BibliotecaResumo,
+    CriarEdicaoPropriaRequest,
+    EdicaoBiblioteca,
+    ItemBiblioteca,
+    RespostaBiblioteca,
+    RespostaEdicoesProprias,
+)
 from schemas.common import DadosMensagem, Dadosmensagem, StatusConexao
 
 __all__ = [
@@ -22,6 +31,13 @@ __all__ = [
     "OfertaLivro",
     "RespostaLivros",
     "RespostaBusca",
+    "AdicionarLivroRequest",
+    "BibliotecaResumo",
+    "CriarEdicaoPropriaRequest",
+    "EdicaoBiblioteca",
+    "ItemBiblioteca",
+    "RespostaBiblioteca",
+    "RespostaEdicoesProprias",
     "DadosMensagem",
     "Dadosmensagem",
     "StatusConexao",

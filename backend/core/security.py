@@ -18,6 +18,11 @@ class ErroAutenticacao(Exception):
     pass
 
 
+class ErroToken(Exception):
+    """Token JWT ausente, inválido, expirado ou sem identificação."""
+    pass
+
+
 # ------------------------ Utilitários de senha -------------------------
 def gerar_hash_senha(senha_plana: str) -> str:
     """Gera o hash bcrypt (com salt aleatório) de uma senha em texto plano."""
@@ -52,3 +57,28 @@ def gerar_token(usuario: dict) -> str:
         "exp": agora + timedelta(minutes=JWT_EXPIRACAO_MINUTOS),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def decodificar_token(token: str) -> dict:
+    """
+    Valida a assinatura, a expiração e o identificador do token JWT.
+
+    Lança ``ErroToken`` para qualquer token ausente, adulterado ou expirado.
+    """
+    if not token:
+        raise ErroToken("Token ausente.")
+
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["exp", "sub"]},
+        )
+    except jwt.PyJWTError:
+        raise ErroToken("Token inválido ou expirado.")
+
+    if not payload.get("sub"):
+        raise ErroToken("Token sem identificação de usuário.")
+
+    return payload

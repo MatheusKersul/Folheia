@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship, synonym
 from core.database import Base
 
@@ -24,6 +24,9 @@ class User(Base):
     Permissoes = synonym("permissoes")
 
     libraries = relationship("Library", back_populates="usuario", cascade="all, delete-orphan")
+    edicoes_criadas = relationship(
+        "Edition", back_populates="criador", cascade="all, delete-orphan"
+    )
 
     def to_dict(self, include_sensitive: bool = False) -> dict:
         """Converte a instância para dicionário público ou completo."""
@@ -44,9 +47,13 @@ class User(Base):
 class Library(Base):
     """
     Modelo ORM que mapeia a tabela 'library' no PostgreSQL.
-    Representa as estantes/bibliotecas virtuais dos usuários.
+    Representa a biblioteca pessoal (estante) do usuário.
+    Cada usuário possui exatamente uma biblioteca (``uq_library_usuario``).
     """
     __tablename__ = "library"
+    __table_args__ = (
+        UniqueConstraint("id_usuario", name="uq_library_usuario"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     id_usuario = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -69,6 +76,9 @@ class LinkLibrary(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_biblioteca = Column(Integer, ForeignKey("library.id", ondelete="CASCADE"), nullable=False)
     id_livro = Column(Integer, ForeignKey("editions.id", ondelete="CASCADE"), nullable=False)
+    criado_em = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     biblioteca = relationship("Library", back_populates="links")
     livro = relationship("Edition", back_populates="links")
