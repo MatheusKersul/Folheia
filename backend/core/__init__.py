@@ -18,8 +18,10 @@ from core.database import engine, SessionLocal, Base, get_db
 from core.security import (
     ErroCadastro,
     ErroAutenticacao,
+    ErroToken,
     gerar_hash_senha,
     verificar_senha,
     gerar_token,
+    decodificar_token,
 )
 from core.redis_client import redis_client, get_redis
