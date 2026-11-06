@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.database import SessionLocal, get_db
 from core.security import ErroCadastro, ErroAutenticacao
 from services.auth_service import register_user, login_user
-from routers import auth_router, books_router, system_router
+from routers import auth_router, books_router, system_router, scrap_router
 
 # Inicialização da aplicação FastAPI
 app = FastAPI(
@@ -34,7 +34,7 @@ app.add_middleware(
 app.include_router(system_router)
 app.include_router(books_router)
 app.include_router(auth_router)
-
+app.include_router(scrap_router)
 
 if __name__ == "__main__":
     sessao = SessionLocal()
@@ -55,6 +55,7 @@ if __name__ == "__main__":
             email="maria@exemplo.com",
             senha_plana="minhaSenhaSegura123",
         )
+        
         print("Login OK:", autenticado)
     except (ErroCadastro, ErroAutenticacao) as erro:
         print("Resultado/Erro esperado:", erro)
