@@ -253,114 +253,178 @@ def mostrar_produto(produto, numero=None):
 
     print("=" * 60)
 
+def extrair_produtos(dados_brutos: list | dict) -> list[dict]:
+
+    if isinstance(dados_brutos, dict):
+        itens = [dados_brutos]
+    elif isinstance(dados_brutos, list):
+        itens = dados_brutos
+    else:
+        return []
+
+    ofertas_limpas = []
+
+    for item in itens:
+        if not isinstance(item, dict):
+            continue
+
+        # 2. Resgata o título / nome
+        titulo = item.get("title") or item.get("name") or "Título não informado"
+
+        # 3. Resgata o autor
+        autor_bruto = item.get("author") or item.get("authors") or item.get("brand") or item.get("manufacturer")
+        if isinstance(autor_bruto, list):
+            nomes = [a.get("name", str(a)) if isinstance(a, dict) else str(a) for a in autor_bruto]
+            autor = ", ".join(nomes) if nomes else "Autor não informado"
+        elif isinstance(autor_bruto, dict):
+            autor = autor_bruto.get("name") or str(autor_bruto)
+        elif autor_bruto:
+            autor = str(autor_bruto).strip()
+        else:
+            autor = "Autor não informado"
+
+        # 4. Pega o preço correto (final_price ou initial_price) e converte para float
+        preco_bruto = item.get("final_price") or item.get("initial_price")
+        try:
+            preco_float = float(preco_bruto) if preco_bruto is not None else 0.0
+        except (ValueError, TypeError):
+            preco_float = 0.0
+
+        # 5. Resgata o link do produto
+        url = item.get("url") or ""
+
+        # 6. Monta o dicionário padronizado do Folheia
+        ofertas_limpas.append({
+            "loja": "Amazon",
+            "titulo": titulo,
+            "autor": autor,
+            "preco": preco_float,
+            "link": url,
+            "disponibilidade": item.get("availability", "Disponível")
+        })
+
+    return ofertas_limpas
+
+
+def executar_scraping_amazon(isbn: str):
+    resposta = buscar_por_isbn(isbn)
+
+    if not resposta or resposta.status_code != 200:
+        return []
+
+    
+    produtos = extrair_produtos(resposta.json())
+
+    return produtos
+
 
 # =========================================================
 # MENU
 # =========================================================
-
-print("=" * 60)
-print("                    FOLHEIA")
-print("                BUSCA NA AMAZON")
-print("=" * 60)
-
-print()
-print("1 - Pesquisar por URL")
-print("2 - Pesquisar por ISBN-13 (conversão direta para ISBN-10)")
-print()
-
-modo = input("Escolha uma opção: ")
-
-inicio_total = time.perf_counter()
-
-
-# =========================================================
-# ESCOLHA DA BUSCA
-# =========================================================
-
-if modo == "1":
+def busca_manual():
+    print("=" * 60)
+    print("                    FOLHEIA")
+    print("                BUSCA NA AMAZON")
+    print("=" * 60)
 
     print()
-    url = input("Digite a URL da Amazon: ")
-    print("\nConsultando a Amazon...\n")
-    resposta = buscar_por_url(url)
-
-elif modo == "2":
-
+    print("1 - Pesquisar por URL")
+    print("2 - Pesquisar por ISBN-13 (conversão direta para ISBN-10)")
     print()
-    isbn = input("Digite o ISBN-13: ")
-    print("\nConvertendo ISBN e consultando a Amazon...\n")
-    resposta = buscar_por_isbn(isbn)
 
-    if resposta is None:
-        print("\nBusca encerrada: não foi possível gerar uma consulta válida.")
-        print(
-            f"[TEMPO] Tempo total do programa após a escolha: "
-            f"{time.perf_counter() - inicio_total:.2f} segundos"
-        )
+    modo = input("Escolha uma opção: ")
+
+    inicio_total = time.perf_counter()
+
+
+    # =========================================================
+    # ESCOLHA DA BUSCA
+    # =========================================================
+
+    if modo == "1":
+
+        print()
+        url = input("Digite a URL da Amazon: ")
+        print("\nConsultando a Amazon...\n")
+        resposta = buscar_por_url(url)
+
+    elif modo == "2":
+
+        print()
+        isbn = input("Digite o ISBN-13: ")
+        print("\nConvertendo ISBN e consultando a Amazon...\n")
+        resposta = buscar_por_isbn(isbn)
+
+        if resposta is None:
+            print("\nBusca encerrada: não foi possível gerar uma consulta válida.")
+            print(
+                f"[TEMPO] Tempo total do programa após a escolha: "
+                f"{time.perf_counter() - inicio_total:.2f} segundos"
+            )
+            raise SystemExit(0)
+
+    else:
+
+        print("\nOpção inválida.")
         raise SystemExit(0)
 
-else:
 
-    print("\nOpção inválida.")
-    raise SystemExit(0)
+    # =========================================================
+    # TRATAMENTO DO RESULTADO
+    # =========================================================
 
+    if resposta.status_code != 200:
 
-# =========================================================
-# TRATAMENTO DO RESULTADO
-# =========================================================
+        print("=" * 60)
+        print("                    ERRO")
+        print("=" * 60)
 
-if resposta.status_code != 200:
-
-    print("=" * 60)
-    print("                    ERRO")
-    print("=" * 60)
-
-    print(f"Status HTTP: {resposta.status_code}")
-    print()
-    print(resposta.text)
-
-else:
-
-    try:
-        resultado = resposta.json()
-    except ValueError:
-        print("A resposta não contém JSON válido.")
+        print(f"Status HTTP: {resposta.status_code}")
+        print()
         print(resposta.text)
-        resultado = []
-
-    if isinstance(resultado, list):
-        produtos = resultado
-    else:
-        produtos = [resultado]
-
-    if not produtos:
-
-        print("=" * 60)
-        print("              NENHUM PRODUTO ENCONTRADO")
-        print("=" * 60)
 
     else:
 
-        print("=" * 60)
-
-        if len(produtos) == 1:
-            print("                 1 PRODUTO ENCONTRADO")
+        try:
+            resultado = resposta.json()
+        except ValueError:
+            print("A resposta não contém JSON válido.")
+            print(resposta.text)
+            resultado = []
+        print (resposta.text)
+        if isinstance(resultado, list):
+            produtos = resultado
         else:
-            print(f"                {len(produtos)} PRODUTOS ENCONTRADOS")
+            produtos = [resultado]
 
-        print("=" * 60)
+        if not produtos:
 
-        for i, produto in enumerate(produtos, start=1):
-            if isinstance(produto, dict):
-                mostrar_produto(produto, i)
+            print("=" * 60)
+            print("              NENHUM PRODUTO ENCONTRADO")
+            print("=" * 60)
+
+        else:
+
+            print("=" * 60)
+
+            if len(produtos) == 1:
+                print("                 1 PRODUTO ENCONTRADO")
             else:
-                print(f"Resultado {i}: {produto}")
+                print(f"                {len(produtos)} PRODUTOS ENCONTRADOS")
 
-        print()
-        print("Busca concluída.")
-        print()
+            print("=" * 60)
 
-print(
-    f"[TEMPO] Tempo total do programa após a escolha: "
-    f"{time.perf_counter() - inicio_total:.2f} segundos"
-)
+            for i, produto in enumerate(produtos, start=1):
+                if isinstance(produto, dict):
+                    mostrar_produto(produto, i)
+                else:
+                    print(f"Resultado {i}: {produto}")
+
+            print()
+            print("Busca concluída.")
+            print()
+
+    print(
+        f"[TEMPO] Tempo total do programa após a escolha: "
+        f"{time.perf_counter() - inicio_total:.2f} segundos"
+    )

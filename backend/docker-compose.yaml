@@ -17,7 +17,10 @@ services:
       dockerfile: Dockerfile.worker
     env_file: .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://redis:6379/0 
     deploy:
       replicas: 3  
 
@@ -32,7 +35,7 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
     volumes: 
       - redis_data:/data
     healthcheck:
