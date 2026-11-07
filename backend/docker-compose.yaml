@@ -2,7 +2,7 @@ services:
 
   catalog-api:
     build: .
-    ports: 
+    ports:
       - "8000:8000"
     env_file: .env
     depends_on:
@@ -10,7 +10,7 @@ services:
         condition: service_healthy
     environment:
       - REDIS_URL=redis://redis:6379/0
-    
+
   scraper-worker:
     build:
       context: .
@@ -20,9 +20,16 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - REDIS_URL=redis://redis:6379/0 
+      - REDIS_URL=redis://redis:6379/0
     deploy:
-      replicas: 3  
+      replicas: 3
+
+  scraper-amazon:
+    build: .
+    env_file: .env
+    command: python scraper_service.py
+    ports:
+      - "8003:8003"
 
   frontend:
     build: ../frontend
@@ -36,7 +43,7 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
-    volumes: 
+    volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
