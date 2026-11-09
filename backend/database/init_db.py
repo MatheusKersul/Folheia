@@ -176,17 +176,6 @@ def create_postgres_schema():
         CALL postgres_execute(
             'aws_pg',
             $$
-            CREATE TABLE IF NOT EXISTS editions (
-                id SERIAL PRIMARY KEY,
-                isbn_13 VARCHAR(13) NOT NULL UNIQUE,
-                titulo TEXT,
-                data_publicacao VARCHAR(255),
-                formato VARCHAR(255),
-                num_paginas INTEGER,
-                editora TEXT,
-                autor TEXT
-            );
-
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 nome VARCHAR(255) NOT NULL,
@@ -201,6 +190,32 @@ def create_postgres_schema():
                 ON users (permissoes)
                 WHERE permissoes = 'admin';
 
+            CREATE TABLE IF NOT EXISTS editions (
+                id SERIAL PRIMARY KEY,
+                isbn_13 VARCHAR(13),
+                titulo TEXT,
+                data_publicacao VARCHAR(255),
+                formato VARCHAR(255),
+                num_paginas INTEGER,
+                editora TEXT,
+                autor TEXT,
+                verificada BOOLEAN NOT NULL DEFAULT TRUE,
+                id_usuario_criador INTEGER,
+                CONSTRAINT fk_editions_criador
+                    FOREIGN KEY (id_usuario_criador)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+                CONSTRAINT ck_editions_privada_tem_dono
+                    CHECK (verificada OR id_usuario_criador IS NOT NULL)
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_editions_isbn_oficial
+                ON editions (isbn_13)
+                WHERE isbn_13 IS NOT NULL AND verificada;
+
+            CREATE INDEX IF NOT EXISTS ix_editions_criador
+                ON editions (id_usuario_criador);
+
             CREATE TABLE IF NOT EXISTS library (
                 id SERIAL PRIMARY KEY,
                 id_usuario INTEGER NOT NULL,
@@ -208,13 +223,16 @@ def create_postgres_schema():
                 CONSTRAINT fk_library_usuario
                     FOREIGN KEY (id_usuario)
                     REFERENCES users(id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+                CONSTRAINT uq_library_usuario
+                    UNIQUE (id_usuario)
             );
 
             CREATE TABLE IF NOT EXISTS link_library (
                 id SERIAL PRIMARY KEY,
                 id_biblioteca INTEGER NOT NULL,
                 id_livro INTEGER NOT NULL,
+                criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 CONSTRAINT fk_link_library_biblioteca
                     FOREIGN KEY (id_biblioteca)
                     REFERENCES library(id)
@@ -271,6 +289,7 @@ def insert_books(livros):
             autor = COALESCE(livros_temp.autor, aws_pg.editions.autor)
         FROM livros_temp
         WHERE aws_pg.editions.isbn_13 = livros_temp.isbn_13
+          AND aws_pg.editions.verificada = TRUE
     """)
 
     # 2. Insere apenas os registros novos
@@ -297,6 +316,7 @@ def insert_books(livros):
             SELECT 1 
             FROM aws_pg.editions e 
             WHERE e.isbn_13 = livros_temp.isbn_13
+              AND e.verificada = TRUE
         )
     """)
 

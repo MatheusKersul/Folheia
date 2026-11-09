@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.database import SessionLocal, get_db
 from core.security import ErroCadastro, ErroAutenticacao
 from services.auth_service import register_user, login_user
-from routers import auth_router, books_router, system_router, scrap_router
+from routers import auth_router, books_router, system_router, scrap_router, library_router
 
 # Inicialização da aplicação FastAPI
 app = FastAPI(
@@ -35,6 +35,8 @@ app.include_router(system_router)
 app.include_router(books_router)
 app.include_router(auth_router)
 app.include_router(scrap_router)
+app.include_router(library_router)
+
 
 if __name__ == "__main__":
     sessao = SessionLocal()
