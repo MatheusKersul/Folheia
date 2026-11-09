@@ -43,6 +43,32 @@ body {
   box-shadow: 0 5px 18px rgba(20, 33, 61, 0.18);
 }
 
+.btn-header-admin {
+  position: absolute;
+  right: 32px;
+  top: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(252, 163, 17, 0.6);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-header-admin:hover {
+  background: #fca311;
+  color: #14213d;
+  border-color: #fca311;
+  box-shadow: 0 4px 12px rgba(252, 163, 17, 0.25);
+}
+
 .header h1 {
   margin: 0;
 

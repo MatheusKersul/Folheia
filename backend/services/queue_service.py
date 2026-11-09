@@ -1,6 +1,7 @@
 import uuid
 import json
-from typing import Optional, Dict, Any
+import time
+from typing import Optional, Dict, Any, List
 from contextlib import contextmanager
 from core.redis_client import redis_client
 
@@ -31,11 +32,9 @@ class QueueService:
     def check_chave_temp(self, isbn: str):
         return self.redis.sismember("fila:itens", isbn)
 
-    def rem_chave_temp(self, isbn:str):
+    def rem_chave_temp(self, isbn: str):
         if self.redis.sismember("fila:itens", isbn):
-            self.redis.srem("fila:itens",isbn)
-        else:
-            pass
+            self.redis.srem("fila:itens", isbn)
 
     def obter_proxima_tarefa(self, timeout: int = 5) -> Optional[Dict[str, Any]]:
         """
@@ -79,14 +78,13 @@ class QueueService:
         return bool(self.redis.exists(lock_key))
 
     def _chave_resultado(self, isbn: str) -> str:
-        
         return f"resultado:scrape:{isbn}"
 
     def salvar_resultado(self, isbn: str, dados: list[dict], ttl: int = 86400) -> bool:
         """
         [CREATE / UPDATE]
         Salva as ofertas no Redis em formato JSON.
-        TTL padrão: 3600 segundos (uma hora de cache).
+        TTL padrão: 86400 segundos (24 horas de cache).
         """
         chave = self._chave_resultado(isbn)
         conteudo = json.dumps(dados, ensure_ascii=False)
@@ -118,3 +116,50 @@ class QueueService:
         """
         chave = self._chave_resultado(isbn)
         return bool(self.redis.delete(chave))
+
+
+    def registrar_heartbeat(self, worker_id: str, ttl: int = 25):
+        self.redis.set(f"worker:heartbeat:{worker_id}", str(time.time()), ex=ttl)
+
+    def registrar_metrica_tarefa(
+        self,
+        worker_id: str,
+        isbn: str,
+        duracao_segundos: float,
+        sucesso: bool = True,
+        num_ofertas: int = 0
+    ):
+        """Registra a conclusão de uma tarefa de scraping para monitoramento."""
+        registro = {
+            "worker_id": worker_id,
+            "isbn": isbn,
+            "duracao_s": round(duracao_segundos, 2),
+            "sucesso": sucesso,
+            "ofertas": num_ofertas,
+            "timestamp": int(time.time())
+        }
+        # Armazena na lista de histórico recente (mantém até 50 execuções)
+        self.redis.lpush("metrics:worker:historico", json.dumps(registro))
+        self.redis.ltrim("metrics:worker:historico", 0, 49)
+
+        # Atualiza o snapshot do worker
+        self.redis.hset(
+            f"metrics:worker:{worker_id}",
+            mapping={
+                "ultimo_isbn": isbn,
+                "ultima_duracao_s": str(round(duracao_segundos, 2)),
+                "ultimo_timestamp": str(int(time.time())),
+                "ultimo_status": "sucesso" if sucesso else "falha"
+            }
+        )
+
+    def obter_tarefas_recentes(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """Recupera as últimas tarefas processadas pelos workers."""
+        itens = self.redis.lrange("metrics:worker:historico", 0, limit - 1)
+        tarefas = []
+        for raw in itens:
+            try:
+                tarefas.append(json.loads(raw))
+            except Exception:
+                pass
+        return tarefas

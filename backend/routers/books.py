@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from core.database import get_db
+from core.database import get_db_read
 from schemas.book import RespostaLivros, RespostaBusca
 from services.book_service import buscar_livro_com_cache, buscar_precos_ofertas
 
@@ -11,7 +11,7 @@ router = APIRouter(tags=["Livros e Preços"])
 async def rota_buscar_livros(
     tipo: Optional[str] = None,
     termo: str = "",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_read)
 ):
     """
     Busca as informações cadastrais de uma obra no catálogo.
@@ -19,7 +19,7 @@ async def rota_buscar_livros(
     - 'titulo': Busca textual no título
     - 'autor': Busca textual no nome do autor
     - 'isbn': Busca exata pelo ISBN-13
-    Utiliza cache inteligente no Redis.
+    Utiliza réplica de leitura da AWS e cache inteligente no Redis.
     """
     return await buscar_livro_com_cache(db=db, tipo=tipo, termo=termo)
 

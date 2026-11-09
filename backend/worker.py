@@ -1,5 +1,6 @@
 import os
 import signal
+import time
 import logging
 
 from services.queue_service import QueueService
@@ -28,7 +29,8 @@ def handle_shutdown(signum, frame):
 def processar_tarefa(
     queue_service: QueueService,
     scraper_client: ScraperClient,
-    tarefa: dict
+    tarefa: dict,
+    worker_id: str = "worker"
 ):
     isbn = tarefa.get("isbn")
 
@@ -37,6 +39,7 @@ def processar_tarefa(
         return
 
     logging.info(f"Processando ISBN: {isbn}")
+    inicio_tempo = time.perf_counter()
 
     # 1. Tenta adquirir o Lock Distribuído
     with queue_service.lock_isbn(isbn, ttl=120) as locked:
@@ -53,6 +56,7 @@ def processar_tarefa(
         try:
             # 2. Chama o scraper-amazon através do Service Discovery
             dados = scraper_client.executar_scraping(isbn)
+            duracao = round(time.perf_counter() - inicio_tempo, 2)
 
             if not dados:
                 logging.warning(
@@ -62,6 +66,13 @@ def processar_tarefa(
                     isbn,
                     [],
                     ttl=600
+                )
+                queue_service.registrar_metrica_tarefa(
+                    worker_id=worker_id,
+                    isbn=isbn,
+                    duracao_segundos=duracao,
+                    sucesso=False,
+                    num_ofertas=0
                 )
                 return
 
@@ -73,8 +84,16 @@ def processar_tarefa(
                     ttl=86400
                 )
 
+                queue_service.registrar_metrica_tarefa(
+                    worker_id=worker_id,
+                    isbn=isbn,
+                    duracao_segundos=duracao,
+                    sucesso=True,
+                    num_ofertas=len(dados)
+                )
+
                 logging.info(
-                    f"ISBN {isbn} pesquisado e salvo no Redis com sucesso! "
+                    f"ISBN {isbn} pesquisado e salvo no Redis com sucesso em {duracao}s! "
                     f"({len(dados)} ofertas)"
                 )
 
@@ -89,6 +108,14 @@ def processar_tarefa(
             )
 
         except Exception as e:
+            duracao = round(time.perf_counter() - inicio_tempo, 2)
+            queue_service.registrar_metrica_tarefa(
+                worker_id=worker_id,
+                isbn=isbn,
+                duracao_segundos=duracao,
+                sucesso=False,
+                num_ofertas=0
+            )
             logging.error(
                 f"Erro ao processar ISBN {isbn}: {e}",
                 exc_info=True
@@ -112,6 +139,9 @@ def main():
 
     while RUNNING:
         try:
+            # Emite batimento cardíaco para a telemetria do Admin saber que o worker está vivo
+            queue_service.registrar_heartbeat(worker_id)
+
             # BRPOP bloqueante (espera 5s por novas mensagens sem gastar CPU)
             tarefa = queue_service.obter_proxima_tarefa(timeout=5)
 
@@ -119,7 +149,8 @@ def main():
                 processar_tarefa(
                     queue_service,
                     scraper_client,
-                    tarefa
+                    tarefa,
+                    worker_id=worker_id
                 )
 
         except Exception as e:
@@ -128,7 +159,6 @@ def main():
                 exc_info=True
             )
 
-            import time
             time.sleep(2)
 
     logging.info(

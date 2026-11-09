@@ -17,10 +17,22 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_HOST = os.getenv("DB_HOST", "")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "")
+DB_REPLICA_HOST = os.getenv("DB_REPLICA_HOST", "").strip()
 
+# URL de conexão da instância primária (escrita)
 DATABASE_URL = (
     os.getenv("DATABASE_URL")
     or f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
+
+# URL de conexão da réplica de leitura
+DATABASE_URL_REPLICA = (
+    os.getenv("DATABASE_URL_REPLICA")
+    or (
+        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_REPLICA_HOST}:{DB_PORT}/{DB_NAME}"
+        if DB_REPLICA_HOST
+        else None
+    )
 )
 
 # Configurações de Autenticação e Segurança (JWT e Bcrypt)

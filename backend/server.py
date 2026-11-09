@@ -1,18 +1,17 @@
-import sys
-from pathlib import Path
-
-# Garante que o diretório backend esteja no sys.path
-backend_dir = Path(__file__).resolve().parent
-if str(backend_dir) not in sys.path:
-    sys.path.insert(0, str(backend_dir))
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.database import SessionLocal, get_db
 from core.security import ErroCadastro, ErroAutenticacao
 from services.auth_service import register_user, login_user
-from routers import auth_router, books_router, system_router, scrap_router, library_router
+from routers import (
+    auth_router,
+    books_router,
+    system_router,
+    scrap_router,
+    library_router,
+    admin_router,
+)
 
 # Inicialização da aplicação FastAPI
 app = FastAPI(
@@ -36,6 +35,7 @@ app.include_router(books_router)
 app.include_router(auth_router)
 app.include_router(scrap_router)
 app.include_router(library_router)
+app.include_router(admin_router)
 
 
 if __name__ == "__main__":
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         )
         print("Usuário criado:", novo)
 
-        # Login
+        # Login com as credenciais criadas
         autenticado = login_user(
             sessao,
             email="maria@exemplo.com",
@@ -61,7 +61,5 @@ if __name__ == "__main__":
         print("Login OK:", autenticado)
     except (ErroCadastro, ErroAutenticacao) as erro:
         print("Resultado/Erro esperado:", erro)
-    except Exception as e:
-        print("Exceção:", e)
     finally:
         sessao.close()
