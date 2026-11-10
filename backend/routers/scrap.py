@@ -40,6 +40,15 @@ async def enfileirar_scraping(requisicao: ScrapeRequest):
     isbn_limpo = normalizar_isbn(requisicao.isbn)
     ja_na_fila = queue_service.check_chave_temp(isbn_limpo)
     em_processamento = queue_service.lock_ativo(isbn_limpo)
+    ja_processado = queue_service.existe_resultado(isbn_limpo)
+
+    if ja_processado:
+        return ScrapeResponse(
+            status="concluido",
+            mensagem=f"O ISBN {isbn_limpo} já foi pesquisado anteriormente e está salvo na memória",
+            isbn=isbn_limpo,
+            scp=requisicao.scp,
+        )
 
     # 1. Verifica se já existe um worker com lock ativo processando esse ISBN
 
@@ -107,4 +116,40 @@ async def tamanho_fila():
     return {
         "fila": queue_service.queue_key,
         "total_pendentes": queue_service.tamanho_fila()
+    }
+
+@router.get("/fila/teste", summary="Executa teste em lote enfileirando livros populares")
+async def executar_teste():
+    """
+    Rota de teste para simular carga e enfileirar uma lista de ISBNs populares.
+    Retorna o status de cada livro (enfileirado, já em cache ou em andamento).
+    """
+    lista_isbns = [
+        ' 978-8581052755',
+        ' 978-8581050454 ',
+        '978-85-359-1484-9',
+        '978-65-551-1029-6',
+        '978-85-325-2995-4',
+        ' 978-8581052434 ',
+        ' 978-8576574408 ',
+        ' 978-8576574415 ',
+        ' 978-6586064155 ',
+        ' 978-8556512000 '
+    ]
+
+    resultados = []
+    for item in lista_isbns:
+        req = ScrapeRequest(isbn=item, scp="amazon", prioridade=False)
+        resposta = await enfileirar_scraping(req)
+        resultados.append({
+            "isbn": resposta.isbn,
+            "status": resposta.status,
+            "mensagem": resposta.mensagem
+        })
+
+    return {
+        "mensagem": "Teste em lote processado com sucesso.",
+        "total_enviados": len(lista_isbns),
+        "tamanho_atual_fila": queue_service.tamanho_fila(),
+        "resultados": resultados
     }

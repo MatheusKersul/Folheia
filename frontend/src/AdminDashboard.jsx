@@ -118,6 +118,7 @@ export default function AdminDashboard({ onVoltar }) {
               <span>
                 {dados?.servidor?.versao && `v${dados.servidor.versao}`}
                 {dados?.servidor?.uptime_formatado && ` • Ativo há ${dados.servidor.uptime_formatado}`}
+                {dados?.replicacao?.papel && ` • Papel: ${dados.replicacao.papel.toUpperCase()} (${dados.replicacao.replicas_conectadas} réplica${dados.replicacao.replicas_conectadas !== 1 ? 's' : ''})`}
               </span>
             </div>
           </div>

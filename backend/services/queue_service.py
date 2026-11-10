@@ -80,7 +80,14 @@ class QueueService:
     def _chave_resultado(self, isbn: str) -> str:
         return f"resultado:scrape:{isbn}"
 
-    def salvar_resultado(self, isbn: str, dados: list[dict], ttl: int = 86400) -> bool:
+    def salvar_resultado(
+        self,
+        isbn: str,
+        dados: list[dict],
+        ttl: int = 86400,
+        esperar_replicas: int = 2,
+        timeout_wait_ms: int = 1000
+    ) -> bool:
         """
         [CREATE / UPDATE]
         Salva as ofertas no Redis em formato JSON.
@@ -88,7 +95,21 @@ class QueueService:
         """
         chave = self._chave_resultado(isbn)
         conteudo = json.dumps(dados, ensure_ascii=False)
-        return bool(self.redis.set(chave, conteudo, ex=ttl))
+        sucesso = bool(self.redis.set(chave, conteudo, ex=ttl))
+
+        if sucesso and esperar_replicas > 0:
+            try:
+                confirmadas = self.redis.wait(esperar_replicas, timeout_wait_ms)
+                if confirmadas < esperar_replicas:
+                    print(
+                        f"[WARN][Redis WAIT] Chave {chave} confirmada em {confirmadas}/{esperar_replicas} "
+                        f"réplicas no prazo de {timeout_wait_ms}ms."
+                    )
+            except Exception:
+                # Ignora suavemente se rodando em modo standalone local sem réplicas ativas
+                pass
+
+        return sucesso
 
     def obter_resultado(self, isbn: str) -> Optional[list[dict]]:
         """

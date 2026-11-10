@@ -6,10 +6,23 @@ services:
       - "8000:8000"
     env_file: .env
     depends_on:
-      redis:
+      redis-master:
+        condition: service_healthy
+      redis-replica-1:
+        condition: service_healthy
+      redis-replica-2:
+        condition: service_healthy
+      sentinel-1:
+        condition: service_healthy
+      sentinel-2:
+        condition: service_healthy
+      sentinel-3:
         condition: service_healthy
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://172.28.0.10:6379/0
+      - REDIS_USE_SENTINEL=true
+      - REDIS_SENTINEL_HOSTS=172.28.0.21:26379,172.28.0.22:26379,172.28.0.23:26379
+      - REDIS_SENTINEL_MASTER_NAME=mymaster
 
   scraper-worker:
     build:
@@ -17,10 +30,23 @@ services:
       dockerfile: Dockerfile.worker
     env_file: .env
     depends_on:
-      redis:
+      redis-master:
+        condition: service_healthy
+      redis-replica-1:
+        condition: service_healthy
+      redis-replica-2:
+        condition: service_healthy
+      sentinel-1:
+        condition: service_healthy
+      sentinel-2:
+        condition: service_healthy
+      sentinel-3:
         condition: service_healthy
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://172.28.0.10:6379/0
+      - REDIS_USE_SENTINEL=true
+      - REDIS_SENTINEL_HOSTS=172.28.0.21:26379,172.28.0.22:26379,172.28.0.23:26379
+      - REDIS_SENTINEL_MASTER_NAME=mymaster
     deploy:
       replicas: 3
 
@@ -38,13 +64,19 @@ services:
     depends_on:
       - catalog-api
 
-  redis:
+  # --- NÓ PRINCIPAL (REDIS MASTER - 172.28.0.10) ---
+  redis-master:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
     volumes:
-      - redis_data:/data
+      - redis_master_data:/data
+    networks:
+      default:
+        ipv4_address: 172.28.0.10
+        aliases:
+          - redis
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -52,5 +84,114 @@ services:
       retries: 5
       start_period: 3s
 
+  # --- RÉPLICAS DE DADOS (READ / FAILOVER TARGETS) ---
+  redis-replica-1:
+    image: redis:7-alpine
+    command: redis-server --replicaof 172.28.0.10 6379 --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    volumes:
+      - redis_replica1_data:/data
+    networks:
+      default:
+        ipv4_address: 172.28.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  redis-replica-2:
+    image: redis:7-alpine
+    command: redis-server --replicaof 172.28.0.10 6379 --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    volumes:
+      - redis_replica2_data:/data
+    networks:
+      default:
+        ipv4_address: 172.28.0.12
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  # --- SENTINELS (QUORUM DE 2 - MONITORAMENTO DIRETO POR IP) ---
+  sentinel-1:
+    image: redis:7-alpine
+    command: >
+      sh -c "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && redis-sentinel /tmp/sentinel.conf"
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./sentinel/sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      default:
+        ipv4_address: 172.28.0.21
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  sentinel-2:
+    image: redis:7-alpine
+    command: >
+      sh -c "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && redis-sentinel /tmp/sentinel.conf"
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./sentinel/sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      default:
+        ipv4_address: 172.28.0.22
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  sentinel-3:
+    image: redis:7-alpine
+    command: >
+      sh -c "cp /etc/redis/sentinel.conf /tmp/sentinel.conf && redis-sentinel /tmp/sentinel.conf"
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./sentinel/sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      default:
+        ipv4_address: 172.28.0.23
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
 volumes:
-  redis_data:
+  redis_master_data:
+  redis_replica1_data:
+  redis_replica2_data:
