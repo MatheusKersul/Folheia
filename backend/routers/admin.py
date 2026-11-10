@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from fastapi import APIRouter, HTTPException, status
 from core.redis_client import redis_client
 from services.queue_service import QueueService
+import redis
 
 router = APIRouter(prefix="/admin", tags=["Administração e Telemetria"])
 queue_service = QueueService()
@@ -60,6 +61,7 @@ def obter_telemetria_redis() -> Dict[str, Any]:
     info_server = redis_client.info("server")
     info_clients = redis_client.info("clients")
     info_stats = redis_client.info("stats")
+    info_rep = redis_client.info("replication")
 
     uptime_segundos = int(info_server.get("uptime_in_seconds", 0))
     dias = uptime_segundos // 86400
@@ -160,6 +162,11 @@ def obter_telemetria_redis() -> Dict[str, Any]:
             "porta": info_server.get("tcp_port", 6379),
             "modo": info_server.get("redis_mode", "standalone")
         },
+        "replicacao": {
+            "papel": info_rep.get("role", "master"),
+            "replicas_conectadas": int(info_rep.get("connected_slaves", 0)),
+            "master_sync_in_progress": bool(int(info_rep.get("master_sync_in_progress", 0)))
+        },
         "memoria": {
             "usada_human": usada_human,
             "pico_human": pico_human,
@@ -205,3 +212,31 @@ def excluir_chave(chave: str):
     if not removido:
         raise HTTPException(status_code=404, detail="Chave não encontrada no Redis.")
     return {"status": "sucesso", "mensagem": f"Chave '{chave}' excluída com sucesso."}
+
+@router.post("/chaos/derrubar-master", summary="Simula a queda da instância primária do Redis")
+def derrubar_master():
+    """
+    [CHAOS TESTING]
+    Envia um comando 'SHUTDOWN NOSAVE' para o Redis Master atual.
+    O nó cairá imediatamente, forçando os Sentinels a:
+    1. Detectar a falha em ~3 segundos.
+    2. Votar e eleger uma das duas réplicas como novo Master.
+    3. Reconfigurar a outra réplica e a aplicação automaticamente.
+    """
+    try:
+        info = redis_client.info("server")
+        porta = info.get("tcp_port", 6379)
+
+        try:
+            redis_client.execute_command("SHUTDOWN", "NOSAVE")
+        except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError):
+            # Erro esperado porque o processo do Redis morreu no meio da resposta
+            pass
+
+        return {
+            "status": "sucesso",
+            "mensagem": f"Comando SHUTDOWN enviado para o Master (porta {porta}). O nó foi derrubado!",
+            "orientacao": "Acompanhe os logs dos Sentinels para ver a eleição: docker compose logs -f sentinel-1"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao derrubar o Master: {str(e)}")
