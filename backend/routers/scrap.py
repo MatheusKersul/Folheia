@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from services.queue_service import QueueService
 from schemas.scrap import ScrapeStatusResponse
+from core.redis_client import redis_client
 
 router = APIRouter(prefix="/scp", tags=["Scrapper"])
 queue_service = QueueService()
@@ -118,25 +119,25 @@ async def tamanho_fila():
         "total_pendentes": queue_service.tamanho_fila()
     }
 
+lista_isbns = [
+    '978-8581052755',
+    '978-8581050454',
+    '978-8535914849',
+    '978-6555110296',
+    '978-8532529954',
+    '978-8581052434',
+    '978-8576574408',
+    '978-8576574415',
+    '978-6586064155',
+    '978-8556512000'
+]
+
 @router.get("/fila/teste", summary="Executa teste em lote enfileirando livros populares")
 async def executar_teste():
     """
     Rota de teste para simular carga e enfileirar uma lista de ISBNs populares.
     Retorna o status de cada livro (enfileirado, já em cache ou em andamento).
     """
-    lista_isbns = [
-        ' 978-8581052755',
-        ' 978-8581050454 ',
-        '978-85-359-1484-9',
-        '978-65-551-1029-6',
-        '978-85-325-2995-4',
-        ' 978-8581052434 ',
-        ' 978-8576574408 ',
-        ' 978-8576574415 ',
-        ' 978-6586064155 ',
-        ' 978-8556512000 '
-    ]
-
     resultados = []
     for item in lista_isbns:
         req = ScrapeRequest(isbn=item, scp="amazon", prioridade=False)
@@ -146,10 +147,19 @@ async def executar_teste():
             "status": resposta.status,
             "mensagem": resposta.mensagem
         })
-
     return {
         "mensagem": "Teste em lote processado com sucesso.",
         "total_enviados": len(lista_isbns),
         "tamanho_atual_fila": queue_service.tamanho_fila(),
         "resultados": resultados
     }
+
+@router.post("/chaves/deletar_chaves")
+def excluir_chaves_cache():
+
+    for item in lista_isbns:
+        chave = queue_service._chave_resultado(normalizar_isbn(item))
+        removido = bool(redis_client.delete(chave))
+    if not removido:
+        raise HTTPException(status_code=404, detail="Chave não encontrada no Redis.")
+    return {"status": "sucesso", "mensagem": f"chaves de teste excluidas com sucesso"}
