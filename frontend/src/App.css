@@ -58,6 +58,7 @@ body {
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -552,4 +553,907 @@ body {
 /* Ajuste o tamanho máximo do formulário para caber o novo botão */
 .search-form {
   max-width: 650px; 
+}
+
+/* ========================================
+   NAVEGAÇÃO
+   ======================================== */
+
+.header-title-link {
+  position: relative;
+  z-index: 5;
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+
+  background: #14213d;
+  border-bottom: 1px solid rgba(252, 163, 17, 0.4);
+
+  box-shadow: 0 4px 14px rgba(20, 33, 61, 0.18);
+}
+
+.navbar-inner {
+  max-width: 1080px;
+
+  margin: 0 auto;
+  padding: 0 20px;
+
+  min-height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.navbar-links,
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-link {
+  padding: 8px 12px;
+
+  border-radius: 8px;
+
+  color: #cdd6e6;
+
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+
+  transition: color 0.2s, background 0.2s;
+}
+
+.nav-link:hover {
+  color: #fca311;
+  background: rgba(252, 163, 17, 0.08);
+}
+
+.nav-link.active {
+  color: #fca311;
+  background: rgba(252, 163, 17, 0.12);
+}
+
+.navbar-user-name {
+  max-width: 180px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.navbar .nav-logout {
+  padding: 8px 12px;
+
+  border: none;
+  background: none;
+
+  color: #cdd6e6;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: color 0.2s;
+}
+
+.navbar .nav-logout:hover {
+  color: #ff9d9d;
+}
+
+.navbar .nav-button-outline,
+.navbar .nav-button-solid {
+  padding: 8px 16px;
+
+  border-radius: 50px;
+
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.navbar .nav-button-outline {
+  border: 1px solid rgba(252, 163, 17, 0.65);
+  color: #fca311;
+}
+
+.navbar .nav-button-outline:hover {
+  background: rgba(252, 163, 17, 0.12);
+  color: #ffc457;
+}
+
+.navbar .nav-button-solid {
+  border: 1px solid #fca311;
+  background: #fca311;
+  color: #14213d;
+}
+
+.navbar .nav-button-solid:hover {
+  background: #ffb533;
+  border-color: #ffb533;
+}
+
+/* ========================================
+   CABEÇALHO DE PÁGINA
+   ======================================== */
+
+.page-heading {
+  margin: 0 0 28px;
+
+  text-align: center;
+}
+
+.page-heading h2 {
+  margin: 0;
+
+  color: #14213d;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+.page-heading h2::after {
+  content: "";
+
+  display: block;
+
+  width: 64px;
+  height: 4px;
+
+  margin: 14px auto 0;
+
+  background: #fca311;
+
+  border-radius: 4px;
+}
+
+.page-heading p {
+  max-width: 640px;
+
+  margin: 16px auto 0;
+
+  color: #526079;
+
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   PAINÉIS E FORMULÁRIOS
+   ======================================== */
+
+.panel {
+  position: relative;
+  overflow: hidden;
+
+  margin-bottom: 24px;
+  padding: 26px 28px;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e6eb;
+  border-radius: 16px;
+
+  box-shadow:
+    0 10px 28px rgba(20, 33, 61, 0.07),
+    0 2px 6px rgba(20, 33, 61, 0.04);
+}
+
+.panel::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 4px;
+
+  background: #fca311;
+}
+
+.panel h3 {
+  margin: 0 0 6px;
+
+  color: #14213d;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.panel-subtitle {
+  margin: 0 0 18px;
+
+  color: #526079;
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field label {
+  color: #14213d;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.field input,
+.field select,
+.field-input {
+  width: 100%;
+  padding: 13px 16px;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e6eb;
+  border-radius: 10px;
+
+  color: #14213d;
+
+  font-size: 15px;
+
+  outline: none;
+
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field input::placeholder,
+.field-input::placeholder {
+  color: #9aa4b6;
+}
+
+.field input:focus,
+.field select:focus,
+.field-input:focus {
+  border-color: #fca311;
+  box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.18);
+}
+
+.field-input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 22px;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 4px;
+}
+
+.form-grid .alert {
+  margin: 0;
+}
+
+/* ========================================
+   BOTÕES E ALERTAS
+   ======================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 13px 22px;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: #14213d;
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #fca311;
+  color: #14213d;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #14213d;
+
+  border: 1px solid #d7dce5;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fffaf0;
+  border-color: #fca311;
+  color: #a86c00;
+}
+
+.btn-gold {
+  background: #fca311;
+  color: #14213d;
+}
+
+.btn-gold:hover:not(:disabled) {
+  background: #ffb533;
+}
+
+.btn-danger-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 9px 14px;
+
+  background: transparent;
+
+  border: 1px solid rgba(179, 38, 30, 0.25);
+  border-radius: 10px;
+
+  color: #b3261e;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-danger-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.btn-danger-link:hover {
+  background: #fdeceb;
+  border-color: #b3261e;
+}
+
+.alert {
+  margin: 0 0 20px;
+  padding: 13px 16px;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+
+  text-align: left;
+}
+
+.alert-center {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 24px;
+}
+
+.alert-error {
+  background: #fdf1f0;
+  border-color: #f3c9c5;
+  color: #a0231b;
+}
+
+.alert-success {
+  background: #eef8f1;
+  border-color: #c6e6d3;
+  color: #1b6e45;
+}
+
+.alert-info {
+  background: #eef3fb;
+  border-color: #cfdcf2;
+  color: #2a4c7d;
+}
+
+/* ========================================
+   AUTENTICAÇÃO
+   ======================================== */
+
+.auth-card {
+  position: relative;
+  overflow: hidden;
+
+  width: 100%;
+  max-width: 470px;
+
+  margin: 0 auto;
+  padding: 40px 42px 34px;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e6eb;
+  border-radius: 16px;
+
+  box-shadow:
+    0 15px 38px rgba(20, 33, 61, 0.09),
+    0 3px 9px rgba(20, 33, 61, 0.05);
+}
+
+.auth-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 5px;
+
+  background: #fca311;
+}
+
+.auth-card h2 {
+  margin: 0;
+
+  text-align: center;
+
+  color: #14213d;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+.auth-card h2::after {
+  content: "";
+
+  display: block;
+
+  width: 60px;
+  height: 4px;
+
+  margin: 15px auto 0;
+
+  background: #fca311;
+
+  border-radius: 4px;
+}
+
+.auth-subtitle {
+  margin: 16px 0 26px;
+
+  text-align: center;
+
+  color: #526079;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e8ebf0;
+
+  text-align: center;
+
+  color: #526079;
+
+  font-size: 14px;
+}
+
+.auth-footer a {
+  color: #14213d;
+
+  font-weight: 700;
+  text-decoration: none;
+
+  border-bottom: 2px solid #fca311;
+}
+
+.auth-footer a:hover {
+  color: #a86c00;
+}
+
+/* ========================================
+   BIBLIOTECA PESSOAL
+   ======================================== */
+
+.library-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.library-toolbar .panel {
+  margin-bottom: 24px;
+}
+
+.own-edition-panel {
+  margin-bottom: 24px;
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.book-item {
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  padding: 22px 24px 20px;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e6eb;
+  border-radius: 14px;
+
+  box-shadow:
+    0 8px 22px rgba(20, 33, 61, 0.06),
+    0 2px 5px rgba(20, 33, 61, 0.03);
+}
+
+.book-item::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+
+  width: 4px;
+
+  background: #fca311;
+}
+
+.book-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.book-item h3 {
+  margin: 0;
+
+  color: #14213d;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.book-item-author {
+  margin: 5px 0 0;
+
+  color: #526079;
+
+  font-size: 14px;
+  font-style: italic;
+}
+
+.badge {
+  flex-shrink: 0;
+
+  padding: 5px 10px;
+
+  border-radius: 50px;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-propria {
+  background: rgba(252, 163, 17, 0.16);
+  border: 1px solid rgba(252, 163, 17, 0.45);
+  color: #a86c00;
+}
+
+.badge-oficial {
+  background: #eef3fb;
+  border: 1px solid #cfdcf2;
+  color: #2a4c7d;
+}
+
+.book-item-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+
+  margin: 0;
+  padding-top: 14px;
+
+  border-top: 1px solid #eceff4;
+}
+
+.book-item-meta div {
+  min-width: 0;
+}
+
+.book-item-meta dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-bottom: 3px;
+
+  color: #7a869c;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.book-item-meta dt svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2;
+  color: #fca311;
+}
+
+.book-item-meta dd {
+  margin: 0;
+
+  color: #33405a;
+
+  font-size: 14px;
+  line-height: 1.4;
+
+  overflow-wrap: anywhere;
+}
+
+.book-item-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.empty-state {
+  padding: 48px 28px;
+
+  background: #ffffff;
+
+  border: 1px dashed #cfd6e2;
+  border-radius: 14px;
+
+  text-align: center;
+
+  color: #526079;
+}
+
+.empty-state svg {
+  width: 40px;
+  height: 40px;
+
+  margin: 0 auto 14px;
+
+  color: #fca311;
+  stroke-width: 1.6;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+
+  color: #14213d;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  margin-top: 30px;
+}
+
+.pagination span {
+  color: #526079;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ========================================
+   PÁGINA DE BUSCA
+   ======================================== */
+
+.book-card-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 10px;
+  padding-top: 22px;
+
+  border-top: 1px solid #eceff4;
+}
+
+.search-hint {
+  max-width: 600px;
+
+  margin: 0 auto;
+  padding: 26px;
+
+  color: #7a869c;
+
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ========================================
+   RESPONSIVIDADE DAS NOVAS PÁGINAS
+   ======================================== */
+
+@media (max-width: 800px) {
+  .navbar-inner {
+    padding: 10px 18px;
+    justify-content: center;
+  }
+
+  .btn-header-admin {
+    right: 16px;
+    top: 12px;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .library-toolbar,
+  .library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: 36px 28px 30px;
+  }
+}
+
+@media (max-width: 500px) {
+  .navbar-user-name {
+    max-width: 110px;
+  }
+
+  .btn-header-admin {
+    right: 12px;
+    top: 10px;
+    padding: 7px;
+  }
+
+  .btn-header-admin-text {
+    display: none;
+  }
+
+  .page-heading h2 {
+    font-size: 29px;
+  }
+
+  .panel {
+    padding: 22px 20px;
+  }
+
+  .auth-card {
+    padding: 32px 22px 26px;
+    border-radius: 13px;
+  }
+
+  .auth-card h2 {
+    font-size: 28px;
+  }
+
+  .book-item {
+    padding: 20px 18px 18px;
+  }
+
+  .book-item-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions .btn,
+  .search-row .btn {
+    width: 100%;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }
