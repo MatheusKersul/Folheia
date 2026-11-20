@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { ArrowRight, LogIn } from 'lucide-react';
 
 import { useAuth } from '../auth/useAuth';
+import AuthLayout from '../components/AuthLayout';
+import PasswordField from '../components/PasswordField';
+import { useToast } from '../ui/useToast';
 
 function Login() {
   const { autenticado, login } = useAuth();
+  const { notificar } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const destino = location.state?.from || '/biblioteca';
@@ -33,6 +37,7 @@ function Login() {
 
     try {
       await login(email.trim(), senha);
+      notificar('Bem-vindo de volta! Boa leitura.', 'success');
       navigate(destino, { replace: true });
     } catch (falha) {
       setErro(falha.message);
@@ -42,17 +47,31 @@ function Login() {
   };
 
   return (
-    <div className="auth-card">
-      <h2>Entrar</h2>
-      <p className="auth-subtitle">
-        Acesse sua conta para consultar e gerenciar sua biblioteca pessoal.
-      </p>
-
+    <AuthLayout
+      eyebrow="Boas-vindas de volta"
+      title="Entrar na sua conta"
+      subtitle="Acesse sua biblioteca pessoal, acompanhe suas edições e continue de onde parou."
+      footer={
+        <>
+          Ainda não tem conta?{' '}
+          <Link to="/cadastro" state={{ from: location.state?.from }}>
+            Criar conta
+          </Link>
+        </>
+      }
+      legal="Ao entrar, você concorda com o uso responsável dos dados da sua conta neste projeto acadêmico."
+    >
       {mensagemInicial && (
-        <div className="alert alert-success">{mensagemInicial}</div>
+        <div className="alert alert--success" role="status">
+          {mensagemInicial}
+        </div>
       )}
 
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {erro && (
+        <div className="alert alert--error" role="alert">
+          {erro}
+        </div>
+      )}
 
       <form className="auth-form" onSubmit={enviar}>
         <div className="field">
@@ -63,42 +82,41 @@ function Login() {
             autoComplete="email"
             placeholder="voce@exemplo.com"
             value={email}
-            onChange={(evento) => setEmail(evento.target.value)}
+            onChange={(evento) => {
+              setEmail(evento.target.value);
+              setErro('');
+            }}
+            data-autofocus
           />
         </div>
 
-        <div className="field">
-          <label htmlFor="login-senha">Senha</label>
-          <input
-            id="login-senha"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Sua senha"
-            value={senha}
-            onChange={(evento) => setSenha(evento.target.value)}
-          />
-        </div>
+        <PasswordField
+          id="login-senha"
+          label="Senha"
+          value={senha}
+          onChange={(evento) => {
+            setSenha(evento.target.value);
+            setErro('');
+          }}
+          autoComplete="current-password"
+          placeholder="Digite sua senha"
+        />
 
         <button
           type="submit"
-          className="btn btn-primary btn-block"
+          className="btn btn--primary btn--block"
           disabled={carregando}
         >
-          <LogIn />
+          {carregando ? (
+            <span className="btn__spinner" aria-hidden="true" />
+          ) : (
+            <LogIn aria-hidden="true" />
+          )}
           {carregando ? 'Entrando...' : 'Entrar'}
+          {!carregando && <ArrowRight aria-hidden="true" />}
         </button>
       </form>
-
-      <div className="auth-footer">
-        Ainda não tem conta?{' '}
-        <Link
-          to="/cadastro"
-          state={{ from: location.state?.from }}
-        >
-          Cadastre-se
-        </Link>
-      </div>
-    </div>
+    </AuthLayout>
   );
 }
 

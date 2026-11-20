@@ -1,20 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Barcode,
   BookOpen,
   Building2,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   LibraryBig,
   Plus,
   Search,
   Trash2,
+  UserRound,
   X,
 } from 'lucide-react';
 
 import { api } from '../api';
 import { useAuth } from '../auth/useAuth';
+import BookCover from '../components/BookCover';
+import ConfirmDialog from '../components/ConfirmDialog';
+import Modal from '../components/Modal';
+import { useToast } from '../ui/useToast';
 
 const ITENS_POR_PAGINA = 8;
 
@@ -40,24 +47,29 @@ function formatarDataHora(valor) {
 
 function Biblioteca() {
   const { token, usuario, logout } = useAuth();
+  const { notificar } = useToast();
   const navigate = useNavigate();
 
   const [itens, setItens] = useState([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [totalProprias, setTotalProprias] = useState(null);
+  const [pagina, setPagina] = useState(1);
   const [termo, setTermo] = useState('');
   const [termoAplicado, setTermoAplicado] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
-  const [aviso, setAviso] = useState(null);
+  const [recarregar, setRecarregar] = useState(0);
 
   const [isbn, setIsbn] = useState('');
   const [adicionando, setAdicionando] = useState(false);
 
-  const [formAberto, setFormAberto] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
   const [form, setForm] = useState(FORM_VAZIO);
   const [formErro, setFormErro] = useState('');
   const [salvando, setSalvando] = useState(false);
+
+  const [itemParaRemover, setItemParaRemover] = useState(null);
+  const [removendo, setRemovendo] = useState(false);
 
   const tratarFalha = useCallback(
     (falha) => {
@@ -72,37 +84,12 @@ function Biblioteca() {
     [logout, navigate],
   );
 
-  const iniciarCarregamento = () => {
-    setCarregando(true);
-    setErro('');
-  };
-
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    setErro('');
-
-    try {
-      const dados = await api.listarBiblioteca(token, {
-        page,
-        limit: ITENS_POR_PAGINA,
-        q: termoAplicado,
-      });
-
-      setItens(dados.itens);
-      setTotal(dados.total);
-    } catch (falha) {
-      setErro(tratarFalha(falha));
-    } finally {
-      setCarregando(false);
-    }
-  }, [token, page, termoAplicado, tratarFalha]);
-
   useEffect(() => {
     let ativo = true;
 
     api
       .listarBiblioteca(token, {
-        page,
+        page: pagina,
         limit: ITENS_POR_PAGINA,
         q: termoAplicado,
       })
@@ -111,9 +98,8 @@ function Biblioteca() {
           return;
         }
 
-        setItens(dados.itens);
-        setTotal(dados.total);
-        setErro('');
+        setItens(dados.itens || []);
+        setTotal(dados.total || 0);
       })
       .catch((falha) => {
         if (ativo) {
@@ -129,41 +115,93 @@ function Biblioteca() {
     return () => {
       ativo = false;
     };
-  }, [token, page, termoAplicado, tratarFalha]);
+  }, [token, pagina, termoAplicado, recarregar, tratarFalha]);
 
-  const buscar = (evento) => {
-    evento.preventDefault();
+  useEffect(() => {
+    let ativo = true;
 
-    const novoTermo = termo.trim();
+    api
+      .listarEdicoesProprias(token, { page: 1, limit: 1 })
+      .then((dados) => {
+        if (ativo) {
+          setTotalProprias(dados.total || 0);
+        }
+      })
+      .catch(() => {
+        /* o contador é complementar; falhas não bloqueiam a página */
+      });
 
-    if (novoTermo === termoAplicado && page === 1) {
-      iniciarCarregamento();
-      carregar();
-      return;
-    }
+    return () => {
+      ativo = false;
+    };
+  }, [token, recarregar]);
 
-    if (novoTermo !== termoAplicado) {
-      setTermoAplicado(novoTermo);
-    }
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const limpo = termo.trim();
 
-    if (page !== 1) {
-      setPage(1);
-    }
+      if (limpo !== termoAplicado) {
+        setCarregando(true);
+        setErro('');
+        setPagina(1);
+        setTermoAplicado(limpo);
+      }
+    }, 450);
 
-    iniciarCarregamento();
+    return () => window.clearTimeout(timer);
+  }, [termo, termoAplicado]);
+
+  const recarregarLista = () => {
+    setCarregando(true);
+    setErro('');
+    setRecarregar((atual) => atual + 1);
   };
 
   const irParaPagina = (novaPagina) => {
-    iniciarCarregamento();
-    setPage(novaPagina);
+    if (novaPagina === pagina) {
+      return;
+    }
+
+    setCarregando(true);
+    setErro('');
+    setPagina(novaPagina);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const enviarBusca = (evento) => {
+    evento.preventDefault();
+
+    setCarregando(true);
+    setErro('');
+
+    const limpo = termo.trim();
+
+    if (limpo === termoAplicado) {
+      if (pagina !== 1) {
+        setPagina(1);
+      } else {
+        recarregarLista();
+      }
+      return;
+    }
+
+    setPagina(1);
+    setTermoAplicado(limpo);
+  };
+
+  const limparBusca = () => {
+    setCarregando(true);
+    setErro('');
+    setTermo('');
+    setTermoAplicado('');
+    setPagina(1);
   };
 
   const adicionarPorIsbn = async (evento) => {
     evento.preventDefault();
-    setAviso(null);
 
     if (!isbn.trim()) {
-      setAviso({ tipo: 'erro', texto: 'Informe o ISBN-13 da obra.' });
+      notificar('Informe o ISBN-13 da obra.', 'error');
       return;
     }
 
@@ -172,19 +210,18 @@ function Biblioteca() {
     try {
       await api.adicionarLivro(token, { isbn: isbn.trim() });
       setIsbn('');
-      setAviso({
-        tipo: 'sucesso',
-        texto: 'Obra adicionada à sua biblioteca.',
-      });
+      notificar('Obra adicionada à sua biblioteca.', 'success');
 
-      if (page === 1) {
-        await carregar();
+      setCarregando(true);
+      setErro('');
+
+      if (pagina !== 1) {
+        setPagina(1);
       } else {
-        iniciarCarregamento();
-        setPage(1);
+        recarregarLista();
       }
     } catch (falha) {
-      setAviso({ tipo: 'erro', texto: tratarFalha(falha) });
+      notificar(tratarFalha(falha), 'error');
     } finally {
       setAdicionando(false);
     }
@@ -192,6 +229,20 @@ function Biblioteca() {
 
   const alterarCampo = (campo) => (evento) => {
     setForm((atual) => ({ ...atual, [campo]: evento.target.value }));
+  };
+
+  const abrirFormulario = () => {
+    setFormErro('');
+    setModalAberto(true);
+  };
+
+  const fecharFormulario = () => {
+    if (salvando) {
+      return;
+    }
+
+    setModalAberto(false);
+    setFormErro('');
   };
 
   const enviarEdicaoPropria = async (evento) => {
@@ -218,17 +269,16 @@ function Biblioteca() {
     try {
       await api.criarEdicaoPropria(token, payload);
       setForm(FORM_VAZIO);
-      setFormAberto(false);
-      setAviso({
-        tipo: 'sucesso',
-        texto: 'Edição própria criada e adicionada à biblioteca.',
-      });
+      setModalAberto(false);
+      notificar('Edição própria criada e adicionada à biblioteca.', 'success');
 
-      if (page === 1) {
-        await carregar();
+      setCarregando(true);
+      setErro('');
+
+      if (pagina !== 1) {
+        setPagina(1);
       } else {
-        iniciarCarregamento();
-        setPage(1);
+        recarregarLista();
       }
     } catch (falha) {
       setFormErro(tratarFalha(falha));
@@ -237,128 +287,415 @@ function Biblioteca() {
     }
   };
 
-  const remover = async (item) => {
-    const confirmou = window.confirm(
-      `Remover "${item.edicao.titulo}" da sua biblioteca?`,
-    );
-
-    if (!confirmou) {
+  const confirmarRemocao = async () => {
+    if (!itemParaRemover) {
       return;
     }
 
-    setAviso(null);
+    setRemovendo(true);
 
     try {
-      await api.removerItem(token, item.id);
-      setAviso({ tipo: 'sucesso', texto: 'Obra removida da biblioteca.' });
+      await api.removerItem(token, itemParaRemover.id);
+      notificar('Obra removida da biblioteca.', 'success');
+      setItemParaRemover(null);
 
-      if (itens.length === 1 && page > 1) {
-        iniciarCarregamento();
-        setPage(page - 1);
+      setCarregando(true);
+      setErro('');
+
+      if (itens.length === 1 && pagina > 1) {
+        setPagina(pagina - 1);
       } else {
-        await carregar();
+        recarregarLista();
       }
     } catch (falha) {
-      setAviso({ tipo: 'erro', texto: tratarFalha(falha) });
+      notificar(tratarFalha(falha), 'error');
+    } finally {
+      setRemovendo(false);
     }
   };
 
   const totalPaginas = Math.max(1, Math.ceil(total / ITENS_POR_PAGINA));
   const nomeUsuario = usuario?.nome?.split(' ')[0] || 'leitor';
 
+  const paginasVisiveis = Array.from(
+    { length: totalPaginas },
+    (_, indice) => indice + 1,
+  ).filter(
+    (numero) =>
+      numero === 1 ||
+      numero === totalPaginas ||
+      Math.abs(numero - pagina) <= 1,
+  );
+
   return (
-    <>
-      <div className="page-heading">
-        <h2>Minha Biblioteca</h2>
-        <p>
-          {total > 0
-            ? `${total} ${total === 1 ? 'obra' : 'obras'} na estante de ${nomeUsuario}.`
-            : `Organize as obras de ${nomeUsuario} em um só lugar.`}
-        </p>
-      </div>
+    <div className="library">
+      <header className="page-heading">
+        <div className="page-heading__text">
+          <span className="eyebrow eyebrow--dark">Sua estante</span>
+          <h1>Minha Biblioteca</h1>
+          <p>
+            {total > 0
+              ? `${total} ${total === 1 ? 'obra organizada' : 'obras organizadas'} por ${nomeUsuario}.`
+              : `Organize as obras de ${nomeUsuario} em um só lugar.`}
+          </p>
+        </div>
 
-      {erro && <div className="alert alert-error">{erro}</div>}
-      {aviso && <div className={`alert alert-${aviso.tipo}`}>{aviso.texto}</div>}
-
-      <section className="panel">
-        <form className="search-row" onSubmit={buscar}>
-          <input
-            type="search"
-            className="field-input"
-            placeholder="Buscar por título, autor ou editora..."
-            value={termo}
-            onChange={(evento) => setTermo(evento.target.value)}
-            aria-label="Buscar na biblioteca"
-          />
-          <button type="submit" className="btn btn-primary">
-            <Search />
-            Buscar
+        <div className="page-heading__actions">
+          <Link to="/" className="btn btn--outline">
+            <Search aria-hidden="true" />
+            Buscar no catálogo
+          </Link>
+          <button type="button" className="btn btn--gold" onClick={abrirFormulario}>
+            <Plus aria-hidden="true" />
+            Nova edição própria
           </button>
-        </form>
-      </section>
+        </div>
+      </header>
+
+      {erro && (
+        <div className="alert alert--error" role="alert">
+          {erro}
+        </div>
+      )}
+
+      <div className="stats">
+        <div className="stat-card">
+          <span className="stat-card__icon" aria-hidden="true">
+            <LibraryBig />
+          </span>
+          <div>
+            <span className="stat-card__value">{total}</span>
+            <span className="stat-card__label">
+              {total === 1 ? 'Obra na estante' : 'Obras na estante'}
+            </span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-card__icon" aria-hidden="true">
+            <UserRound />
+          </span>
+          <div>
+            <span className="stat-card__value">
+              {totalProprias === null ? '—' : totalProprias}
+            </span>
+            <span className="stat-card__label">Edições próprias</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-card__icon" aria-hidden="true">
+            <BookOpen />
+          </span>
+          <div>
+            <span className="stat-card__value">{itens.length}</span>
+            <span className="stat-card__label">Nesta página</span>
+          </div>
+        </div>
+      </div>
 
       <div className="library-toolbar">
         <section className="panel">
-          <h3>Adicionar do catálogo</h3>
-          <p className="panel-subtitle">
-            Informe o ISBN-13 de uma obra oficial para incluí-la na sua
-            estante.
+          <h2 className="panel__title">
+            <Search aria-hidden="true" />
+            Filtrar a estante
+          </h2>
+          <p className="panel__subtitle">
+            Busque por título, autor ou editora. A lista é atualizada enquanto
+            você digita.
           </p>
-          <form className="search-row" onSubmit={adicionarPorIsbn}>
-            <input
-              type="text"
-              className="field-input"
-              placeholder="9788535902778"
-              inputMode="numeric"
-              maxLength={17}
-              value={isbn}
-              onChange={(evento) => setIsbn(evento.target.value)}
-              aria-label="ISBN da obra"
-            />
-            <button
-              type="submit"
-              className="btn btn-gold"
-              disabled={adicionando}
-            >
-              <Plus />
-              {adicionando ? 'Adicionando...' : 'Adicionar'}
-            </button>
+
+          <form onSubmit={enviarBusca} role="search">
+            <div className="input-group">
+              <Search className="input-group__icon" aria-hidden="true" />
+              <input
+                type="search"
+                placeholder="Buscar por título, autor ou editora..."
+                value={termo}
+                onChange={(evento) => setTermo(evento.target.value)}
+                aria-label="Buscar na biblioteca"
+              />
+
+              {termo && (
+                <button
+                  type="button"
+                  className="input-group__clear"
+                  onClick={limparBusca}
+                  aria-label="Limpar filtro"
+                >
+                  <X />
+                </button>
+              )}
+
+              <button type="submit" className="btn btn--primary">
+                Buscar
+              </button>
+            </div>
           </form>
         </section>
 
         <section className="panel">
-          <h3>Edição própria</h3>
-          <p className="panel-subtitle">
-            Registre uma edição não oficial, visível apenas para você.
+          <h2 className="panel__title">
+            <Barcode aria-hidden="true" />
+            Adicionar do catálogo
+          </h2>
+          <p className="panel__subtitle">
+            Informe o ISBN-13 de uma obra oficial para incluí-la na sua estante.
           </p>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              setFormErro('');
-              setFormAberto((valor) => !valor);
-            }}
-          >
-            {formAberto ? <X /> : <Plus />}
-            {formAberto ? 'Fechar formulário' : 'Nova edição própria'}
-          </button>
+
+          <form onSubmit={adicionarPorIsbn}>
+            <div className="input-group">
+              <Barcode className="input-group__icon" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="9788535902778"
+                inputMode="numeric"
+                maxLength={17}
+                value={isbn}
+                onChange={(evento) => setIsbn(evento.target.value)}
+                aria-label="ISBN da obra"
+              />
+              <button
+                type="submit"
+                className="btn btn--gold"
+                disabled={adicionando}
+              >
+                {adicionando ? (
+                  <span className="btn__spinner" aria-hidden="true" />
+                ) : (
+                  <Plus aria-hidden="true" />
+                )}
+                {adicionando ? 'Adicionando...' : 'Adicionar'}
+              </button>
+            </div>
+          </form>
         </section>
       </div>
 
-      {formAberto && (
-        <section className="panel own-edition-panel">
-          <h3>Nova edição própria</h3>
-          <p className="panel-subtitle">
-            Edições próprias não passam pela verificação do catálogo. O ISBN é
-            opcional, mas quando informado deve ter 13 dígitos.
+      <div className="library-status">
+        <span className="library-status__count">
+          {termoAplicado ? (
+            <>
+              Resultados para <strong>“{termoAplicado}”</strong> — {total}{' '}
+              {total === 1 ? 'obra' : 'obras'}
+            </>
+          ) : (
+            <>
+              Exibindo <strong>{itens.length}</strong> de{' '}
+              <strong>{total}</strong>{' '}
+              {total === 1 ? 'obra' : 'obras'}
+            </>
+          )}
+        </span>
+
+        {carregando && itens.length > 0 && (
+          <span className="library-status__live">
+            <span className="spinner" aria-hidden="true" />
+            Atualizando...
+          </span>
+        )}
+      </div>
+
+      {carregando && itens.length === 0 ? (
+        <div className="library-grid" aria-hidden="true">
+          {Array.from({ length: 4 }).map((_, indice) => (
+            <div className="skeleton-card" key={indice}>
+              <div className="skeleton skeleton-cover" />
+              <div className="skeleton-card__body">
+                <div className="skeleton skeleton--title" />
+                <div className="skeleton skeleton--text short" />
+                <div className="skeleton skeleton--text" />
+                <div className="skeleton skeleton--text" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : itens.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-state__icon" aria-hidden="true">
+            <LibraryBig />
+          </span>
+          <h3>
+            {termoAplicado ? 'Nenhuma obra encontrada' : 'Sua estante está vazia'}
+          </h3>
+          <p>
+            {termoAplicado
+              ? 'Tente outro termo de busca ou limpe o filtro para ver todas as obras.'
+              : 'Adicione uma obra pelo ISBN, busque no catálogo ou registre sua própria edição.'}
           </p>
 
-          <form className="form-grid" onSubmit={enviarEdicaoPropria}>
-            <div className="field field-full">
+          {termoAplicado ? (
+            <button type="button" className="btn btn--outline" onClick={limparBusca}>
+              <X aria-hidden="true" />
+              Limpar filtro
+            </button>
+          ) : (
+            <Link to="/" className="btn btn--primary">
+              <Search aria-hidden="true" />
+              Buscar obras
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="library-grid">
+          {itens.map((item) => {
+            const edicao = item.edicao;
+
+            return (
+              <article className="library-card" key={item.id}>
+                <BookCover
+                  className="library-card__cover"
+                  size="sm"
+                  titulo={edicao.titulo}
+                  autor={edicao.autor}
+                />
+
+                <div className="library-card__body">
+                  <div className="library-card__top">
+                    <div>
+                      <h2 className="library-card__title">{edicao.titulo}</h2>
+                      {edicao.autor && (
+                        <p className="library-card__author">{edicao.autor}</p>
+                      )}
+                    </div>
+
+                    <span
+                      className={`badge ${edicao.propria ? 'badge--gold' : 'badge--blue'}`}
+                    >
+                      {edicao.propria ? 'Própria' : 'Catálogo'}
+                    </span>
+                  </div>
+
+                  <dl className="library-card__meta">
+                    <div>
+                      <dt>
+                        <Barcode aria-hidden="true" />
+                        ISBN
+                      </dt>
+                      <dd>{edicao.isbn || 'Não informado'}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <Building2 aria-hidden="true" />
+                        Editora
+                      </dt>
+                      <dd>{edicao.editora || 'Não informada'}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <CalendarDays aria-hidden="true" />
+                        Publicação
+                      </dt>
+                      <dd>{formatarData(edicao.data_publicacao)}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <BookOpen aria-hidden="true" />
+                        Formato
+                      </dt>
+                      <dd>{edicao.formato || 'Não informado'}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <FileText aria-hidden="true" />
+                        Páginas
+                      </dt>
+                      <dd>{edicao.num_paginas || 'Não informado'}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <CalendarDays aria-hidden="true" />
+                        Adicionado
+                      </dt>
+                      <dd>{formatarDataHora(item.criado_em)}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="library-card__footer">
+                    <button
+                      type="button"
+                      className="library-card__remove"
+                      onClick={() => setItemParaRemover(item)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {!carregando && itens.length > 0 && totalPaginas > 1 && (
+        <nav className="pagination" aria-label="Paginação da biblioteca">
+          <span className="pagination__info">
+            Página <strong>{pagina}</strong> de <strong>{totalPaginas}</strong>
+          </span>
+
+          <div className="pagination__pages">
+            <button
+              type="button"
+              className="page-btn"
+              onClick={() => irParaPagina(pagina - 1)}
+              disabled={pagina <= 1}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft />
+            </button>
+
+            {paginasVisiveis.map((numero, indice) => {
+              const anterior = paginasVisiveis[indice - 1];
+              const temSalto = anterior && numero - anterior > 1;
+
+              return (
+                <Fragment key={numero}>
+                  {temSalto && <span className="page-ellipsis">…</span>}
+                  <button
+                    type="button"
+                    className={`page-btn ${numero === pagina ? 'is-active' : ''}`}
+                    onClick={() => irParaPagina(numero)}
+                    aria-current={numero === pagina ? 'page' : undefined}
+                  >
+                    {numero}
+                  </button>
+                </Fragment>
+              );
+            })}
+
+            <button
+              type="button"
+              className="page-btn"
+              onClick={() => irParaPagina(pagina + 1)}
+              disabled={pagina >= totalPaginas}
+              aria-label="Próxima página"
+            >
+              <ChevronRight />
+            </button>
+          </div>
+        </nav>
+      )}
+
+      <Modal
+        open={modalAberto}
+        titulo="Nova edição própria"
+        subtitulo="Registre uma edição não oficial, visível apenas para você. O ISBN é opcional, mas quando informado deve ter 13 dígitos."
+        onClose={fecharFormulario}
+      >
+        <form onSubmit={enviarEdicaoPropria}>
+          <div className="form-grid">
+            <div className="field field--full">
               <label htmlFor="edicao-titulo">Título *</label>
               <input
                 id="edicao-titulo"
                 type="text"
+                data-autofocus
                 value={form.titulo}
                 onChange={alterarCampo('titulo')}
                 placeholder="Título da obra"
@@ -434,153 +771,54 @@ function Biblioteca() {
             </div>
 
             {formErro && (
-              <div className="alert alert-error field-full">{formErro}</div>
+              <div className="alert alert--error field--full" role="alert">
+                {formErro}
+              </div>
             )}
+          </div>
 
-            <div className="form-actions field-full">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={salvando}
-              >
-                <Plus />
-                {salvando ? 'Salvando...' : 'Salvar edição'}
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
+          <div className="modal__footer">
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={fecharFormulario}
+              disabled={salvando}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn--primary" disabled={salvando}>
+              {salvando ? (
+                <span className="btn__spinner" aria-hidden="true" />
+              ) : (
+                <Plus aria-hidden="true" />
+              )}
+              {salvando ? 'Salvando...' : 'Salvar edição'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
-      {carregando ? (
-        <div className="alert alert-info">Carregando sua biblioteca...</div>
-      ) : itens.length === 0 ? (
-        <div className="empty-state">
-          <LibraryBig />
-          <h3>
-            {termoAplicado
-              ? 'Nenhuma obra encontrada'
-              : 'Sua estante está vazia'}
-          </h3>
-          <p>
-            {termoAplicado
-              ? 'Tente outro termo de busca ou limpe o filtro.'
-              : 'Adicione uma obra pelo ISBN ou registre sua própria edição.'}
-          </p>
-        </div>
-      ) : (
-        <div className="library-grid">
-          {itens.map((item) => {
-            const edicao = item.edicao;
-
-            return (
-              <article className="book-item" key={item.id}>
-                <div className="book-item-header">
-                  <div>
-                    <h3>{edicao.titulo}</h3>
-                    {edicao.autor && (
-                      <p className="book-item-author">{edicao.autor}</p>
-                    )}
-                  </div>
-
-                  <span
-                    className={`badge ${edicao.propria ? 'badge-propria' : 'badge-oficial'}`}
-                  >
-                    {edicao.propria ? 'Edição própria' : 'Catálogo'}
-                  </span>
-                </div>
-
-                <dl className="book-item-meta">
-                  <div>
-                    <dt>
-                      <Barcode />
-                      ISBN
-                    </dt>
-                    <dd>{edicao.isbn || 'Não informado'}</dd>
-                  </div>
-
-                  <div>
-                    <dt>
-                      <Building2 />
-                      Editora
-                    </dt>
-                    <dd>{edicao.editora || 'Não informada'}</dd>
-                  </div>
-
-                  <div>
-                    <dt>
-                      <CalendarDays />
-                      Publicação
-                    </dt>
-                    <dd>{formatarData(edicao.data_publicacao)}</dd>
-                  </div>
-
-                  <div>
-                    <dt>
-                      <BookOpen />
-                      Formato
-                    </dt>
-                    <dd>{edicao.formato || 'Não informado'}</dd>
-                  </div>
-
-                  <div>
-                    <dt>
-                      <FileText />
-                      Páginas
-                    </dt>
-                    <dd>{edicao.num_paginas || 'Não informado'}</dd>
-                  </div>
-
-                  <div>
-                    <dt>
-                      <CalendarDays />
-                      Adicionado
-                    </dt>
-                    <dd>{formatarDataHora(item.criado_em)}</dd>
-                  </div>
-                </dl>
-
-                <div className="book-item-footer">
-                  <button
-                    type="button"
-                    className="btn-danger-link"
-                    onClick={() => remover(item)}
-                  >
-                    <Trash2 />
-                    Remover
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      {!carregando && itens.length > 0 && totalPaginas > 1 && (
-        <div className="pagination">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => irParaPagina(Math.max(1, page - 1))}
-            disabled={page <= 1}
-          >
-            Anterior
-          </button>
-
-          <span>
-            Página {page} de {totalPaginas}
-          </span>
-
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => irParaPagina(Math.min(totalPaginas, page + 1))}
-            disabled={page >= totalPaginas}
-          >
-            Próxima
-          </button>
-        </div>
-      )}
-    </>
+      <ConfirmDialog
+        open={Boolean(itemParaRemover)}
+        titulo="Remover obra"
+        mensagem={
+          itemParaRemover ? (
+            <>
+              Remover <strong>“{itemParaRemover.edicao.titulo}”</strong> da sua
+              biblioteca? Essa ação não afeta o catálogo oficial.
+            </>
+          ) : null
+        }
+        confirmarLabel="Remover obra"
+        processando={removendo}
+        onConfirmar={confirmarRemocao}
+        onCancelar={() => {
+          if (!removendo) {
+            setItemParaRemover(null);
+          }
+        }}
+      />
+    </div>
   );
 }
 

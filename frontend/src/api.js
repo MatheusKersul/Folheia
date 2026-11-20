@@ -75,6 +75,11 @@ export const api = {
       `/buscar-livros?tipo=${encodeURIComponent(tipo)}&termo=${encodeURIComponent(termo)}`,
     ),
 
+  buscarPrecos: (termo, isbn = 'Não informado') =>
+    request(
+      `/buscar-precos/${encodeURIComponent(termo)}?isbn=${encodeURIComponent(isbn)}`,
+    ),
+
   listarBiblioteca: (token, { page = 1, limit = 20, q = '' } = {}) => {
     const params = new URLSearchParams({
       page: String(page),
