@@ -16,6 +16,8 @@ import Biblioteca from './pages/Biblioteca';
 import Cadastro from './pages/Cadastro';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+import { ToastProvider } from './ui/ToastProvider';
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -26,26 +28,29 @@ function AdminPage() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/admin" element={<AdminPage />} />
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/admin" element={<AdminPage />} />
 
-          <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="login" element={<Login />} />
-            <Route path="cadastro" element={<Cadastro />} />
-            <Route
-              path="biblioteca"
-              element={
-                <ProtectedRoute>
-                  <Biblioteca />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+            <Route element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="login" element={<Login />} />
+              <Route path="cadastro" element={<Cadastro />} />
+              <Route
+                path="biblioteca"
+                element={
+                  <ProtectedRoute>
+                    <Biblioteca />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

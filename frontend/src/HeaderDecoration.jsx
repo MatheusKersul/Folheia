@@ -1,7 +1,7 @@
-function HeaderDecoration() {
+function HeaderDecoration({ className = '' }) {
   return (
     <svg
-      className="header-decoration-left"
+      className={`header-decoration-left ${className}`.trim()}
       viewBox="0 0 260 150"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
