@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "epub.js": "^0.2.15",
+    "react-reader": "^2.0.15"
+  }
+}
