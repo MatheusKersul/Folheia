@@ -10,6 +10,7 @@ class QueueService:
     def __init__(self, client=redis_client):
         self.redis = client
         self.queue_key = "queue:scrape"
+        self.catalog_queue_key = "queue:catalog:ingest"
 
     def enfileirar_scrape(self, isbn: str, scp: str = "amazon", prioridade: bool = False) -> int:
         """
@@ -22,6 +23,27 @@ class QueueService:
             return self.redis.rpush(self.queue_key, payload)
         else:
             return self.redis.lpush(self.queue_key, payload)
+
+    def enfileirar_ingestao_catalogo(self, isbn: str, dados: list[dict]) -> int:
+        """
+        Enfileira os dados extraídos pelo scraping para ingestão assíncrona
+        no RDS (tabela editions) e upload de capa no S3.
+        """
+        payload = json.dumps({"isbn": isbn, "dados": dados}, ensure_ascii=False)
+        return self.redis.lpush(self.catalog_queue_key, payload)
+
+    def obter_proxima_ingestao_catalogo(self, timeout: int = 5) -> Optional[Dict[str, Any]]:
+        """
+        Bloqueia até timeout aguardando um novo item para ingestão de catálogo.
+        """
+        resultado = self.redis.brpop(self.catalog_queue_key, timeout=timeout)
+        if resultado:
+            _, item_json = resultado
+            return json.loads(item_json)
+        return None
+
+    def tamanho_fila_catalogo(self) -> int:
+        return self.redis.llen(self.catalog_queue_key)
 
     def tamanho_fila(self) -> int:
         return self.redis.llen(self.queue_key)

@@ -107,6 +107,17 @@ def processar_tarefa(
                 f"ISBN {isbn} busca feita com sucesso!"
             )
 
+            try:
+                queue_service.enfileirar_ingestao_catalogo(isbn=isbn, dados=dados)
+                logging.info(
+                    f"ISBN {isbn} enfileirado com sucesso para ingestão no catálogo/S3."
+                )
+            except Exception as e:
+                logging.error(
+                    f"Falha ao enfileirar ISBN {isbn} para ingestão no catálogo: {e}",
+                    exc_info=True,
+                )
+
         except Exception as e:
             duracao = round(time.perf_counter() - inicio_tempo, 2)
             queue_service.registrar_metrica_tarefa(

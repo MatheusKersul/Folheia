@@ -253,6 +253,31 @@ def mostrar_produto(produto, numero=None):
 
     print("=" * 60)
 
+def _mapear_product_details(item: dict) -> dict[str, str]:
+    """Converte a lista 'product_details' do Bright Data em um dicionário normalizado."""
+    detalhes = {}
+    bruto = item.get("product_details")
+    if isinstance(bruto, list):
+        for entrada in bruto:
+            if not isinstance(entrada, dict):
+                continue
+            chave = entrada.get("type")
+            valor = entrada.get("value")
+            if chave and valor is not None:
+                detalhes[str(chave).strip().lower()] = str(valor).strip()
+    return detalhes
+
+
+def _extrair_int_paginas(valor_bruto) -> int | None:
+    """Extrai o número inteiro de páginas de strings como '320 páginas'."""
+    if valor_bruto is None:
+        return None
+    if isinstance(valor_bruto, int):
+        return valor_bruto
+    match = re.search(r"\d+", str(valor_bruto))
+    return int(match.group()) if match else None
+
+
 def extrair_produtos(dados_brutos: list | dict) -> list[dict]:
 
     if isinstance(dados_brutos, dict):
@@ -267,7 +292,6 @@ def extrair_produtos(dados_brutos: list | dict) -> list[dict]:
     for item in itens:
         if not isinstance(item, dict):
             continue
-
         # 2. Resgata o título / nome
         titulo = item.get("title") or item.get("name") or "Título não informado"
 
@@ -293,14 +317,61 @@ def extrair_produtos(dados_brutos: list | dict) -> list[dict]:
         # 5. Resgata o link do produto
         url = item.get("url") or ""
 
-        # 6. Monta o dicionário padronizado do Folheia
+        # 6. Extrai metadados bibliográficos de 'product_details' e 'images'
+        detalhes = _mapear_product_details(item)
+
+        imagens = item.get("images")
+        images_url = item.get("image_url") or (
+            imagens[0] if isinstance(imagens, list) and len(imagens) > 0 else None
+        )
+
+        editora = (
+            detalhes.get("editora")
+            or detalhes.get("publisher")
+            or item.get("publisher")
+        )
+
+        data_publicacao = (
+            detalhes.get("data da publicação")
+            or detalhes.get("publication date")
+            or item.get("publication_date")
+        )
+
+        num_paginas = _extrair_int_paginas(
+            detalhes.get("número de páginas")
+            or detalhes.get("print length")
+            or detalhes.get("páginas")
+            or item.get("pages")
+        )
+
+        formato = (
+            item.get("binding")
+            or detalhes.get("capa")
+            or detalhes.get("formato")
+            or detalhes.get("edição")
+        )
+
+        isbn_bruto = (
+            detalhes.get("isbn-13")
+            or item.get("isbn_13")
+            or item.get("isbn_13_informado")
+        )
+        isbn_13 = re.sub(r"[\s-]", "", str(isbn_bruto)) if isbn_bruto else None
+
+        # 7. Monta o dicionário padronizado do Folheia
         ofertas_limpas.append({
             "loja": "Amazon",
             "titulo": titulo,
             "autor": autor,
             "preco": preco_float,
             "link": url,
-            "disponibilidade": item.get("availability", "Disponível")
+            "disponibilidade": item.get("availability", "Disponível"),
+            "isbn_13": isbn_13,
+            "editora": editora,
+            "data_publicacao": data_publicacao,
+            "formato": formato,
+            "num_paginas": num_paginas,
+            "images_url": images_url,
         })
 
     return ofertas_limpas
@@ -428,3 +499,6 @@ def busca_manual():
         f"[TEMPO] Tempo total do programa após a escolha: "
         f"{time.perf_counter() - inicio_total:.2f} segundos"
     )
+
+if __name__ == "__main__":
+    busca_manual()

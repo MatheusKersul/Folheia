@@ -20,6 +20,7 @@ class RespostaLivros(BaseModel):
     num_paginas: Optional[int] = None
     editora: Optional[str] = None
     autor: Optional[str] = None
+    images_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,6 +35,7 @@ class RespostaLivros(BaseModel):
             num_paginas=edition.num_paginas,
             editora=edition.editora,
             autor=edition.autor,
+            images_url=edition.images_url,
         )
 
 

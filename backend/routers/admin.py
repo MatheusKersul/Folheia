@@ -4,9 +4,11 @@ from typing import Dict, Any, List
 from fastapi import APIRouter, HTTPException, status
 from core.redis_client import redis_client
 from services.queue_service import QueueService
+from routers.admin_db import router as admin_db_router
 import redis
 
 router = APIRouter(prefix="/admin", tags=["Administração e Telemetria"])
+router.include_router(admin_db_router)
 queue_service = QueueService()
 
 

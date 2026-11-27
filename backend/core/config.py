@@ -49,6 +49,11 @@ REDIS_USE_SENTINEL = os.getenv("REDIS_USE_SENTINEL", "false").lower() in ("true"
 REDIS_SENTINEL_HOSTS_RAW = os.getenv("REDIS_SENTINEL_HOSTS", "sentinel-1:26379,sentinel-2:26379,sentinel-3:26379")
 REDIS_SENTINEL_MASTER_NAME = os.getenv("REDIS_SENTINEL_MASTER_NAME", "mymaster")
 
+# Configurações AWS S3
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+AWS_REGION_S3 = os.getenv("AWS_REGION_S3")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME") or os.getenv("AWS_S3_BUCKET", "folheia-capas")
+
 def parse_sentinel_hosts(hosts_raw: str):
     hosts = []
     for item in hosts_raw.split(","):

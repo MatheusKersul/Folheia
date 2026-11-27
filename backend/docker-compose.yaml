@@ -50,6 +50,31 @@ services:
     deploy:
       replicas: 3
 
+  catalog-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: python catalog_worker.py
+    env_file: .env
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-replica-1:
+        condition: service_healthy
+      redis-replica-2:
+        condition: service_healthy
+      sentinel-1:
+        condition: service_healthy
+      sentinel-2:
+        condition: service_healthy
+      sentinel-3:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://172.28.0.10:6379/0
+      - REDIS_USE_SENTINEL=true
+      - REDIS_SENTINEL_HOSTS=172.28.0.21:26379,172.28.0.22:26379,172.28.0.23:26379
+      - REDIS_SENTINEL_MASTER_NAME=mymaster
+
   scraper-amazon:
     build: .
     env_file: .env
