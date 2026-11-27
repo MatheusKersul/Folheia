@@ -548,6 +548,7 @@ function Biblioteca() {
                   size="sm"
                   titulo={edicao.titulo}
                   autor={edicao.autor}
+                  imageUrl={edicao.images_url}
                 />
 
                 <div className="library-card__body">

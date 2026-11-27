@@ -1595,6 +1595,7 @@ kbd {
     rgba(255, 255, 255, 0.12) 55%,
     rgba(0, 0, 0, 0.28)
   );
+  z-index: 2;
 }
 
 .book-cover::after {
@@ -1603,6 +1604,38 @@ kbd {
   inset: 10px;
   border: 1px solid rgba(252, 163, 17, 0.45);
   border-radius: 2px 8px 8px 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.book-cover--has-image {
+  padding: 0;
+}
+
+.book-cover__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transition: transform 0.3s ease;
+}
+
+.book-cover:hover .book-cover__img {
+  transform: scale(1.04);
+}
+
+.book-cover__fadeout {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.05) 0%,
+    rgba(15, 23, 42, 0.25) 50%,
+    rgba(15, 23, 42, 0.85) 100%
+  );
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -1961,15 +1994,26 @@ kbd {
 .library-card {
   position: relative;
   display: flex;
-  gap: 18px;
-  padding: 20px;
+  gap: 22px;
+  padding: 24px;
   border: 1px solid var(--borda);
-  border-radius: var(--raio-md);
+  border-radius: var(--raio-lg);
   background: var(--superficie);
   box-shadow: var(--sombra-xs);
   transition: transform var(--transicao), box-shadow var(--transicao),
     border-color var(--transicao);
   animation: folheia-fade-up 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  overflow: hidden;
+}
+
+.library-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3.5px;
+  background: linear-gradient(90deg, var(--dourado), var(--dourado-claro));
 }
 
 .library-card:hover {
@@ -1979,8 +2023,13 @@ kbd {
 }
 
 .library-card__cover {
-  width: 104px;
+  width: 130px;
   flex-shrink: 0;
+  align-self: start;
+}
+
+.library-card__cover.book-cover--sm {
+  max-width: 130px;
 }
 
 .library-card__body {
