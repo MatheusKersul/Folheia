@@ -30,6 +30,7 @@ class EdicaoBiblioteca(BaseModel):
     num_paginas: Optional[int] = None
     editora: Optional[str] = None
     autor: Optional[str] = None
+    images_url: Optional[str] = None
     verificada: bool
     propria: bool
 
@@ -44,6 +45,7 @@ class EdicaoBiblioteca(BaseModel):
             num_paginas=edition.num_paginas,
             editora=edition.editora,
             autor=edition.autor,
+            images_url=getattr(edition, "images_url", None),
             verificada=bool(edition.verificada),
             propria=edition.propria,
         )

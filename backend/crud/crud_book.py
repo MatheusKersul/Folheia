@@ -117,3 +117,70 @@ def get_edition_visible_to(
     if edition is None or not edicao_visivel_para(edition, usuario_id):
         return None
     return edition
+
+
+def salvar_ou_atualizar_edicao_scraped(
+    db: Session, dados: dict, s3_images_url: Optional[str] = None
+) -> Edition:
+    """
+    Salva uma nova edição oficial proveniente de scraping no RDS ou atualiza
+    uma existente se o ISBN-13 já estiver cadastrado.
+    """
+    isbn_bruto = dados.get("isbn_13") or dados.get("isbn") or ""
+    clean_isbn = isbn_bruto.replace("-", "").strip()
+
+    edition = None
+    if clean_isbn:
+        edition = get_verified_edition_by_isbn(db, clean_isbn)
+
+    final_image_url = s3_images_url or dados.get("images_url")
+
+    if edition:
+        if final_image_url and (not edition.images_url or "s3" in final_image_url):
+            edition.images_url = final_image_url
+
+        if not edition.editora and dados.get("editora"):
+            edition.editora = dados.get("editora")
+        if not edition.data_publicacao and dados.get("data_publicacao"):
+            edition.data_publicacao = str(dados.get("data_publicacao"))
+        if not edition.formato and dados.get("formato"):
+            edition.formato = dados.get("formato")
+        if not edition.num_paginas and dados.get("num_paginas"):
+            try:
+                edition.num_paginas = int(dados.get("num_paginas"))
+            except (ValueError, TypeError):
+                pass
+        if not edition.autor and dados.get("autor"):
+            edition.autor = dados.get("autor")
+        if not edition.titulo and dados.get("titulo"):
+            edition.titulo = dados.get("titulo")
+
+        db.commit()
+        db.refresh(edition)
+        return edition
+
+    num_paginas = None
+    if dados.get("num_paginas"):
+        try:
+            num_paginas = int(dados.get("num_paginas"))
+        except (ValueError, TypeError):
+            num_paginas = None
+
+    nova_edicao = Edition(
+        isbn_13=clean_isbn if clean_isbn else None,
+        titulo=dados.get("titulo"),
+        autor=dados.get("autor"),
+        editora=dados.get("editora"),
+        data_publicacao=str(dados.get("data_publicacao")) if dados.get("data_publicacao") else None,
+        formato=dados.get("formato"),
+        num_paginas=num_paginas,
+        images_url=final_image_url,
+        verificada=True,
+        id_usuario_criador=None,
+    )
+
+    db.add(nova_edicao)
+    db.commit()
+    db.refresh(nova_edicao)
+    return nova_edicao
+

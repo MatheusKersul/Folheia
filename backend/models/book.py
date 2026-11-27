@@ -39,6 +39,7 @@ class Edition(Base):
     num_paginas = Column(Integer, nullable=True)
     editora = Column(Text, nullable=True)
     autor = Column(Text, nullable=True, index=True)
+    images_url = Column(Text, nullable=True, index=True)
 
     # TRUE = catálogo oficial; FALSE = edição própria (não verificada).
     verificada = Column(

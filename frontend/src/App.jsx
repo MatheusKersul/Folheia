@@ -17,6 +17,7 @@ import Cadastro from './pages/Cadastro';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import Teste_reader from './pages/Teste_reader';
 import { ToastProvider } from './ui/ToastProvider';
 
 function AdminPage() {
@@ -36,6 +37,7 @@ function App() {
             <Route element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="login" element={<Login />} />
+              <Route path="/leitor" element={<Teste_reader />} />
               <Route path="cadastro" element={<Cadastro />} />
               <Route
                 path="biblioteca"

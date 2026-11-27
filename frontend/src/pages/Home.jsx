@@ -433,6 +433,7 @@ function Home() {
                 className="result-card__cover"
                 titulo={dadosLivro.titulo}
                 autor={dadosLivro.autor}
+                imageUrl={dadosLivro.images_url}
               />
 
               <div className="result-card__body">

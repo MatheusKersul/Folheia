@@ -465,3 +465,581 @@
   margin: 0;
   font-size: 13px;
 }
+
+
+/* ========================================
+   ABAS PRINCIPAIS DO PAINEL ADMIN
+   ======================================== */
+
+.admin-main-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #d8dde6;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-main-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-main-tab:hover {
+  border-color: #14213d;
+  color: #14213d;
+}
+
+.admin-main-tab.active {
+  background: #14213d;
+  color: #ffffff;
+  border-color: #14213d;
+  box-shadow: 0 4px 12px rgba(20, 33, 61, 0.16);
+}
+
+.admin-main-tab.active svg {
+  color: #fca311;
+}
+
+/* ========================================
+   GERENCIADOR DE BANCO DE DADOS (POSTGRESQL)
+   ======================================== */
+
+.db-layout {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .db-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.db-sidebar {
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.db-sidebar-header h3 {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #14213d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.db-table-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 540px;
+  overflow-y: auto;
+}
+
+.db-table-item {
+  width: 100%;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: #1e293b;
+}
+
+.db-table-item:hover {
+  border-color: #fca311;
+  background: #fffdf7;
+}
+
+.db-table-item.active {
+  background: #14213d;
+  color: #ffffff;
+  border-color: #14213d;
+}
+
+.db-table-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.db-table-item.active .db-table-item-top svg {
+  color: #fca311;
+}
+
+.db-table-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-table-item-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.db-table-item.active .db-table-item-meta {
+  color: #cbd5e1;
+}
+
+.db-workspace {
+  padding: 24px 26px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.db-workspace-header {
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.db-workspace-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.db-btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fca311;
+  color: #14213d;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.db-btn-gold:hover {
+  background: #e5930b;
+}
+
+.db-btn-gold:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.db-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  color: #14213d;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.db-btn-secondary:hover,
+.db-btn-secondary.active {
+  background: #e2e8f0;
+  border-color: #14213d;
+}
+
+.db-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.db-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.db-btn-danger:hover {
+  background: #fecaca;
+}
+
+.db-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.db-subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.db-subtab.active {
+  background: #14213d;
+  color: #ffffff;
+  border-color: #14213d;
+}
+
+.db-filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.db-search-box {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.db-search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px 0;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+}
+
+.db-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #14213d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.db-table-scroll {
+  overflow-x: auto;
+  max-height: 460px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.db-sortable-th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.db-sortable-th:hover {
+  background: #eef2f7;
+}
+
+.db-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.db-null-badge {
+  font-size: 11px;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.db-cell-code {
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #14213d;
+}
+
+.db-row-action {
+  background: transparent;
+  border: none;
+  padding: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.db-row-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.db-row-action.edit:hover:not(:disabled) {
+  color: #14213d;
+  background: #e2e8f0;
+}
+
+.db-row-action.delete:hover:not(:disabled) {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.db-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.db-pagination-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.db-muted {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.db-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.db-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.db-alert-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.db-alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.db-icon-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.db-icon-btn:hover {
+  color: #14213d;
+}
+
+/* Console SQL */
+.db-sql-panel {
+  padding: 22px 26px;
+}
+
+.db-sql-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #0f172a;
+  color: #f8fafc;
+  resize: vertical;
+  outline: none;
+}
+
+.db-sql-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.db-sql-result {
+  margin-top: 16px;
+}
+
+.db-sql-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+/* Modais do Banco */
+.db-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.db-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(20, 33, 61, 0.25);
+  border-top: 4px solid #fca311;
+}
+
+.db-modal-lg {
+  max-width: 720px;
+}
+
+.db-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.db-modal-header h3 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  color: #14213d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.db-modal-scroll {
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.db-form-group {
+  margin-bottom: 14px;
+}
+
+.db-form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #14213d;
+  margin-bottom: 6px;
+}
+
+.db-field-type {
+  font-weight: 400;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.db-form-group input[type="text"],
+.db-form-group select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.db-form-group input:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.db-columns-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.db-column-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.2fr 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.db-check-inline {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  margin-bottom: 0 !important;
+  cursor: pointer;
+}
+
+.db-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}

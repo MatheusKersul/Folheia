@@ -16,8 +16,10 @@ import {
   Layers3
 } from 'lucide-react';
 import './AdminDashboard.css';
+import AdminDatabasePanel from './components/AdminDatabasePanel';
 
 export default function AdminDashboard({ onVoltar }) {
+  const [abaAtiva, setAbaAtiva] = useState('redis'); // 'redis' | 'database'
   const [dados, setDados] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
@@ -109,6 +111,28 @@ export default function AdminDashboard({ onVoltar }) {
       </header>
 
       <main className="admin-container">
+        {/* Navegação por Abas Principais */}
+        <nav className="admin-main-tabs" aria-label="Seções do painel administrativo">
+          <button
+            className={`admin-main-tab ${abaAtiva === 'redis' ? 'active' : ''}`}
+            onClick={() => setAbaAtiva('redis')}
+          >
+            <Server size={16} />
+            Redis &amp; Workers
+          </button>
+          <button
+            className={`admin-main-tab ${abaAtiva === 'database' ? 'active' : ''}`}
+            onClick={() => setAbaAtiva('database')}
+          >
+            <Database size={16} />
+            Banco de Dados (PostgreSQL)
+          </button>
+        </nav>
+
+        {abaAtiva === 'database' ? (
+          <AdminDatabasePanel />
+        ) : (
+          <>
         {/* Barra de Status e Ações */}
         <section className="admin-toolbar">
           <div className="admin-status-indicator">
@@ -423,12 +447,19 @@ export default function AdminDashboard({ onVoltar }) {
           </div>
         </section>
 
-        {/* Seção 4: Placeholder Banco de Dados (RDS) para o futuro */}
+        {/* Atalho para o Gerenciador de Banco de Dados */}
         <section className="placeholder-db-card">
-          <Database size={28} color="#94a3b8" style={{ marginBottom: 8 }} />
-          <h3>Monitoramento de Banco de Dados (RDS PostgreSQL)</h3>
-          <p>Métricas de replicação (Master + Read Replica) e volumetria de tabelas serão integradas aqui nesta mesma tela.</p>
+          <Database size={28} color="#fca311" style={{ marginBottom: 8 }} />
+          <h3>Gerenciamento de Banco de Dados (PostgreSQL)</h3>
+          <p style={{ marginBottom: 14 }}>
+            Consulte tabelas, manipule registros, adicione ou remova colunas e tabelas diretamente pelo painel.
+          </p>
+          <button className="btn-refresh" style={{ margin: '0 auto' }} onClick={() => setAbaAtiva('database')}>
+            <Database size={14} /> Abrir Gerenciador de Banco de Dados
+          </button>
         </section>
+          </>
+        )}
       </main>
     </div>
   );

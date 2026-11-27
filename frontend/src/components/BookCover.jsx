@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const PALETAS = [
   ['#1e3057', '#14213d'],
   ['#14213d', '#0b1425'],
@@ -51,24 +53,48 @@ function obterIniciais(titulo) {
     .join('');
 }
 
-function BookCover({ titulo = '', autor = '', size = 'md', className = '' }) {
+function BookCover({
+  titulo = '',
+  autor = '',
+  size = 'md',
+  className = '',
+  imageUrl = '',
+}) {
+  const [imagemErro, setImagemErro] = useState(false);
+  const temImagem = Boolean(imageUrl) && !imagemErro;
+
   const [inicio, fim] = PALETAS[gerarHash(titulo) % PALETAS.length];
   const iniciais = obterIniciais(titulo);
 
   return (
     <div
-      className={`book-cover ${size === 'sm' ? 'book-cover--sm' : ''} ${className}`.trim()}
+      className={`book-cover ${size === 'sm' ? 'book-cover--sm' : ''} ${temImagem ? 'book-cover--has-image' : ''} ${className}`.trim()}
       style={{ '--capa-fundo': `linear-gradient(150deg, ${inicio}, ${fim})` }}
       aria-hidden="true"
     >
-      <span className="book-cover__glow" />
-      <span className="book-cover__initials">{iniciais}</span>
+      {temImagem ? (
+        <>
+          <img
+            src={imageUrl}
+            alt={titulo || 'Capa do livro'}
+            className="book-cover__img"
+            loading="lazy"
+            onError={() => setImagemErro(true)}
+          />
+          <div className="book-cover__fadeout" />
+        </>
+      ) : (
+        <>
+          <span className="book-cover__glow" />
+          <span className="book-cover__initials">{iniciais}</span>
 
-      <div className="book-cover__bottom">
-        <span className="book-cover__line" />
-        <p className="book-cover__title">{titulo || 'Obra sem título'}</p>
-        {autor && <span className="book-cover__author">{autor}</span>}
-      </div>
+          <div className="book-cover__bottom">
+            <span className="book-cover__line" />
+            <p className="book-cover__title">{titulo || 'Obra sem título'}</p>
+            {autor && <span className="book-cover__author">{autor}</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
